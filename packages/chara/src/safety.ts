@@ -1,4 +1,4 @@
-import type { SvgChild, SvgNode } from './svg.js';
+import { type SvgChild, type SvgNode, stripInvalidXml } from './svg.js';
 
 /** Elements a Chara avatar may contain. `svg` is only allowed as the root. */
 export const ALLOWED_TAGS: ReadonlySet<string> = new Set([
@@ -79,6 +79,19 @@ export const ALLOWED_ATTRIBUTES: Readonly<Record<string, string>> = Object.freez
 const ID_RE = /^[A-Za-z_][A-Za-z0-9_-]*$/;
 const LOCAL_URL_RE = /^url\(#([A-Za-z_][A-Za-z0-9_-]*)\)$/;
 
+// Inspect the value after XML cleanup and CSS token escapes, as a consumer
+// would. Only the original, canonical url(#id) spelling is accepted below.
+function decodedCss(value: string): string {
+  return stripInvalidXml(value)
+    .replace(/\r\n?|\f/g, '\n')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/\\([0-9a-f]{1,6})[ \t\r\n\f]?|\\([^\r\n\f])/gi, (_, hex: string, char: string) => {
+      if (!hex) return char;
+      const code = Number.parseInt(hex, 16);
+      return code === 0 || code > 0x10ffff ? '\uFFFD' : String.fromCodePoint(code);
+    });
+}
+
 /** Thrown when an avatar would contain an element, attribute or reference outside the allowlist. */
 export class CharaSafetyError extends Error {
   constructor(message: string) {
@@ -91,8 +104,9 @@ export class CharaSafetyError extends Error {
  * Checks a whole avatar tree against the allowlist: allowed tags and
  * attributes only, `svg` only at the root, text only inside `title`, unique
  * IDs, and every `url(...)` pointing at an ID defined in the same tree.
+ * When supplied, idNamespace restricts IDs to the avatar's generated prefix.
  */
-export function validateTree(root: SvgNode): void {
+export function validateTree(root: SvgNode, idNamespace?: string): void {
   const defined = new Set<string>();
   const referenced: string[] = [];
 
@@ -112,12 +126,20 @@ export function validateTree(root: SvgNode): void {
       if (!Object.hasOwn(ALLOWED_ATTRIBUTES, name)) {
         throw new CharaSafetyError(`Attribute "${name}" on <${node.tag}> is not allowed`);
       }
+      if (name === 'xmlns' && (parent !== null || value !== 'http://www.w3.org/2000/svg')) {
+        throw new CharaSafetyError(
+          'Attribute "xmlns" is only allowed on the SVG root with the SVG namespace',
+        );
+      }
       if (name === 'id') {
         if (!ID_RE.test(value)) throw new CharaSafetyError(`Element id "${value}" is not a valid id`);
+        if (idNamespace !== undefined && !value.startsWith(idNamespace)) {
+          throw new CharaSafetyError(`Element id "${value}" must be generated with ctx.id(local)`);
+        }
         if (defined.has(value)) throw new CharaSafetyError(`Element id "${value}" is defined more than once`);
         defined.add(value);
       }
-      if (value.toLowerCase().includes('url(')) {
+      if (decodedCss(value).toLowerCase().includes('url(')) {
         const match = LOCAL_URL_RE.exec(value);
         if (!match) {
           throw new CharaSafetyError(

@@ -58,7 +58,13 @@ describe('attribute mapping', () => {
 
 describe('Avatar', () => {
   it.each(THEME_IDS)('matches the core output for %s', (theme) => {
-    for (const opts of [{ size: 40 }, { radius: 50, title: 'Claudette' }, { idPrefix: 'x-' }]) {
+    for (const opts of [
+      { size: 40 },
+      { size: 0.001 },
+      { size: Number.MAX_VALUE },
+      { radius: 50, title: 'Claudette' },
+      { idPrefix: 'x-' },
+    ]) {
       const react = renderToStaticMarkup(<Avatar name="Claudette" theme={theme} {...opts} />);
       expect(describeTree(react)).toEqual(describeTree(createAvatar('Claudette', { theme, ...opts })));
     }
@@ -91,13 +97,17 @@ describe('Avatar', () => {
   });
 
   it('ignores reserved props', () => {
-    const props = { viewBox: '0 0 10 10', children: <circle data-testid="child" />, xmlns: 'x' } as Record<
-      string,
-      unknown
-    >;
+    const props = {
+      viewBox: '0 0 10 10',
+      children: <circle data-testid="child" />,
+      dangerouslySetInnerHTML: { __html: '<script>alert(1)</script>' },
+      xmlns: 'x',
+    } as Record<string, unknown>;
     const { container } = render(<Avatar name="Claudette" {...props} />);
     const svg = container.querySelector('svg')!;
     expect(svg.getAttribute('viewBox')).toBe('0 0 100 100');
+    expect(svg.getAttribute('xmlns')).toBe('http://www.w3.org/2000/svg');
+    expect(svg.querySelector('script')).toBeNull();
     expect(container.querySelector('[data-testid="child"]')).toBeNull();
   });
 

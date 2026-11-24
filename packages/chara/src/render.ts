@@ -88,8 +88,8 @@ export function createAvatarTree(name: string, options: CoreAvatarOptions): SvgN
     {
       xmlns: 'http://www.w3.org/2000/svg',
       viewBox: '0 0 100 100',
-      width: size,
-      height: size,
+      width: size === undefined ? undefined : String(size),
+      height: size === undefined ? undefined : String(size),
       role: cleanTitle ? 'img' : undefined,
       'aria-hidden': cleanTitle ? undefined : 'true',
     },
@@ -107,7 +107,7 @@ export function createAvatarTree(name: string, options: CoreAvatarOptions): SvgN
       drawing.content,
     ),
   );
-  validateTree(root);
+  validateTree(root, `${idBase}-`);
   return root;
 }
 

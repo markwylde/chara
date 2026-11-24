@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createAvatar, THEME_IDS } from '../src/index.js';
+import { createAvatar, defineTheme, THEME_IDS } from '../src/index.js';
 import { GOLDEN_NAMES, parseXml } from './helpers.js';
 
 const definedIds = (svg: string) => {
@@ -46,5 +46,34 @@ describe('ids across inlined avatars', () => {
     expect([...definedIds(createAvatar('Otto', { theme: 'critter' })).keys()]).toEqual([
       ...definedIds(createAvatar('otto', { theme: 'critter' })).keys(),
     ]);
+  });
+
+  it('isolates custom gradient IDs across names, radii and prefixes', () => {
+    const theme = defineTheme({
+      id: 'gradient',
+      draw: ({ el, id, ref, def, rand, hsl }) => {
+        const gradient = id('bg');
+        def(
+          el(
+            'linearGradient',
+            { id: gradient },
+            el('stop', { offset: 0, 'stop-color': hsl(rand.int(360), 50, 50) }),
+          ),
+        );
+        return { background: ref(gradient), content: [] };
+      },
+    });
+    const all = new Set<string>();
+    for (const name of ['Claudette', 'Imagine']) {
+      for (const radius of [0, 50]) {
+        for (const idPrefix of ['first-', 'second-']) {
+          for (const id of definedIds(createAvatar(name, { theme, radius, idPrefix })).keys()) {
+            expect(id.startsWith(idPrefix)).toBe(true);
+            expect(all.has(id)).toBe(false);
+            all.add(id);
+          }
+        }
+      }
+    }
   });
 });

@@ -43,6 +43,39 @@ describe('allowlist', () => {
     );
   });
 
+  it.each([
+    String.raw`u\72l(https://example.com/x)`,
+    String.raw`\75\72\6c(https://example.com/x)`,
+    String.raw`u\000072 l(https://example.com/x)`,
+    'u\\72\r\nl(https://example.com/x)',
+    'u\u0001rl(https://example.com/x)',
+    'u/**/rl(https://example.com/x)',
+    'URL(https://example.com/x)',
+  ])('rejects obfuscated URL value %j before serialization', (fill) => {
+    expect(render(() => ({ background: fill, content: [] }))).toThrow(CharaSafetyError);
+    expect(render(() => ({ background: '#000', content: [el('rect', { stroke: fill })] }))).toThrow(
+      CharaSafetyError,
+    );
+  });
+
+  it('rejects hard-coded theme IDs even when their references resolve locally', () => {
+    expect(
+      render(({ el, def }) => {
+        def(el('linearGradient', { id: 'bg' }));
+        return { background: 'url(#bg)', content: [] };
+      }),
+    ).toThrow(/ctx.id/);
+  });
+
+  it('rejects namespace overrides on theme nodes', () => {
+    expect(
+      render(() => ({
+        background: '#000',
+        content: [el('g', { xmlns: 'http://www.w3.org/1999/xhtml' }, el('title', {}, 'hello'))],
+      })),
+    ).toThrow(/xmlns/);
+  });
+
   it('rejects duplicate ids and nested svg and stray text', () => {
     expect(render((ctx) => ({ background: '#000', content: [el('rect', { id: ctx.id('frame') })] }))).toThrow(
       /more than once/,

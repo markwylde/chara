@@ -105,10 +105,11 @@ console.log(svg);
 ```
 
 Call `rand` in a fixed order, and don't use `Math.random`, dates or other outside state, so output stays deterministic.
+Use `ctx.id(local)` for every ID a theme defines, and `ctx.ref(id)` for references. Hard-coded IDs are rejected so custom avatars remain isolated when inlined together.
 
 ### Safety
 
-Every avatar is checked against an allowlist before it is returned, whichever theme drew it. Only basic shapes, groups, gradients, clip paths and `title` are allowed, with presentation attributes (`ALLOWED_TAGS`, `ALLOWED_ATTRIBUTES`). `url(...)` values must point at an id inside the same avatar. Scripts, event handlers, `style`, `href` and `foreignObject` throw a `CharaSafetyError`, so a custom theme can never produce an avatar that runs code or loads anything.
+Every avatar is checked against an allowlist before it is returned, whichever theme drew it. Only basic shapes, groups, gradients, clip paths and `title` are allowed, with presentation attributes (`ALLOWED_TAGS`, `ALLOWED_ATTRIBUTES`). URL values must use the exact `url(#id)` form and point at an ID inside the same avatar; obfuscated CSS URLs and namespace overrides are rejected. Scripts, event handlers, `style`, `href` and `foreignObject` throw a `CharaSafetyError`. This validates generated SVG content; custom theme draw functions are JavaScript and must be trusted by the host application.
 
 ## Stability
 

@@ -181,7 +181,10 @@ export function App() {
                 {(['dark', 'light'] as const).map((tone) => (
                   <ul className={`sidebar ${tone}`} key={tone} aria-label={`Sidebar preview, ${tone}`}>
                     {[...BOT_NAMES, label].map((bot, i) => (
-                      <li key={bot} className={i === 0 ? 'selected' : undefined}>
+                      <li
+                        key={i === BOT_NAMES.length ? 'current-name' : bot}
+                        className={i === 0 ? 'selected' : undefined}
+                      >
                         <Avatar
                           name={bot}
                           theme={theme.id}

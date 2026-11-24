@@ -58,6 +58,15 @@ describe('size', () => {
     expect(doc.hasAttribute('height')).toBe(false);
   });
 
+  it.each([0.001, Number.MIN_VALUE, 48.123456, Number.MAX_VALUE])(
+    'preserves finite positive size %s',
+    (size) => {
+      const doc = root(createAvatar('a', { size }));
+      expect(doc.getAttribute('width')).toBe(String(size));
+      expect(doc.getAttribute('height')).toBe(String(size));
+    },
+  );
+
   it.each([0, -4, Number.NaN, Number.POSITIVE_INFINITY])('rejects %s', (size) => {
     expect(() => createAvatar('a', { size })).toThrow(RangeError);
   });
