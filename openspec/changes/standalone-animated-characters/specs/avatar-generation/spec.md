@@ -5,23 +5,9 @@
 ### Requirement: Standalone variant
 The library SHALL accept a `variant` option of `"tile"` or `"standalone"`, defaulting to `"tile"`. With `"standalone"`, the avatar SHALL have no background fill and no rounded clip, SHALL be the same character as the tile for the same name and theme, and SHALL be drawn as a whole figure that is visible on both light and dark pages. The `radius` option SHALL have no effect on a standalone avatar. An unknown variant SHALL throw a `TypeError`.
 
-"The same character" means the same generated parts. Mecha and Critter SHALL also keep the same part colours. Sigil keeps the same glyph and hues, but its strokes use a brighter version of the tile's gradient in place of the near-white ink.
-
 #### Scenario: No background
 - **WHEN** an avatar is generated for "Claudette" with `variant: "standalone"` in any built-in theme
 - **THEN** the SVG contains no full-canvas background rectangle and no frame clip path
-
-#### Scenario: Same character as the tile
-- **WHEN** the tile and standalone avatars are generated for the same name in the Mecha theme
-- **THEN** the head, eyes and mouth shapes and their colours are the same in both
-
-#### Scenario: Same Sigil glyph
-- **WHEN** the tile and standalone avatars are generated for the same name in the Sigil theme
-- **THEN** both draw the same set of line segments on the grid
-
-#### Scenario: Nothing hidden shows in a still character
-- **WHEN** a standalone avatar is generated without `animated` and shown on a page with no other avatars
-- **THEN** parts that belong only to a state, such as the sleeping Zs, are not visible
 
 #### Scenario: Critter is a whole figure
 - **WHEN** a standalone Critter is generated
@@ -34,6 +20,21 @@ The library SHALL accept a `variant` option of `"tile"` or `"standalone"`, defau
 #### Scenario: Unknown variant
 - **WHEN** an avatar is requested with `variant: "poster"`
 - **THEN** a `TypeError` is thrown
+
+### Requirement: Same character in both variants
+The standalone avatar SHALL be built from the same generated parts as the tile for the same name and theme. Mecha and Critter SHALL keep the same part colours. Sigil keeps the same glyph and hues, but its strokes use a brighter version of the tile's gradient in place of the near-white ink.
+
+#### Scenario: Same character as the tile
+- **WHEN** the tile and standalone avatars are generated for the same name in the Mecha theme
+- **THEN** the head, eyes and mouth shapes and their colours are the same in both
+
+#### Scenario: Same Sigil glyph
+- **WHEN** the tile and standalone avatars are generated for the same name in the Sigil theme
+- **THEN** both draw the same set of line segments on the grid
+
+#### Scenario: Nothing hidden shows in a still character
+- **WHEN** a standalone avatar is generated without `animated` and shown on a page with no other avatars
+- **THEN** parts that belong only to a state, such as the sleeping Zs, are not visible
 
 ### Requirement: Tile output is unchanged
 Adding the standalone, animation and mono options SHALL NOT change the output for any call that does not use them.
