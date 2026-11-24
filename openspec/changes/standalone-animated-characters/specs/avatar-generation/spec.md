@@ -33,7 +33,7 @@ Adding the standalone, animation and mono options SHALL NOT change the output fo
 - **THEN** the output is byte-identical to the golden files from before this change
 
 ### Requirement: Animation states
-The library SHALL accept `animated` (default false) and `state` options. The states are `idle` (default), `thinking`, `working`, `success`, `error` and `sleeping`. An animated avatar SHALL carry its animation inside the SVG, needing no stylesheet or script from the host, and SHALL contain the rules for every state so that changing the root's `data-state` attribute switches state. `animated: true` SHALL require the standalone variant and throw a `TypeError` otherwise. An unknown state SHALL throw a `TypeError`. Without `animated`, the output SHALL contain no stylesheet and no `data-state`.
+The library SHALL accept `animated` (default false) and `state` options. The states are `idle` (default), `thinking`, `working`, `success`, `error` and `sleeping`. An animated avatar SHALL carry its animation inside the SVG, with rules for every state, so that changing the root's `data-state` attribute switches state without help from the host page.
 
 #### Scenario: Animated output is self-contained
 - **WHEN** a standalone avatar is generated with `animated: true` and `state: "thinking"`
@@ -43,6 +43,13 @@ The library SHALL accept `animated` (default false) and `state` options. The sta
 - **WHEN** a standalone avatar is generated without `animated`
 - **THEN** the SVG contains no stylesheet and no `data-state` attribute
 
+#### Scenario: Works as an image
+- **WHEN** an animated standalone avatar is produced as a data URI and loaded in an `<img>` in a browser
+- **THEN** the image renders and its animations run
+
+### Requirement: Animation option validation
+`animated: true` SHALL require the standalone variant and throw a `TypeError` otherwise. An unknown state SHALL throw a `TypeError`. Without `animated`, the output SHALL contain no stylesheet and no `data-state`, whatever `state` is given.
+
 #### Scenario: Animated tile is rejected
 - **WHEN** an avatar is requested with `animated: true` and the tile variant
 - **THEN** a `TypeError` is thrown
@@ -51,9 +58,9 @@ The library SHALL accept `animated` (default false) and `state` options. The sta
 - **WHEN** an avatar is requested with `state: "dancing"`
 - **THEN** a `TypeError` is thrown
 
-#### Scenario: Works as an image
-- **WHEN** an animated standalone avatar is produced as a data URI and loaded in an `<img>` in a browser
-- **THEN** the image renders and its animations run
+#### Scenario: State without animation
+- **WHEN** a standalone avatar is generated with `state: "sleeping"` and without `animated`
+- **THEN** the output equals the output with no `state` given
 
 ### Requirement: Reduced motion
 An animated avatar SHALL not move when the viewer has asked for reduced motion.
