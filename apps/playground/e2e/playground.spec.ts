@@ -10,7 +10,7 @@ test('golden avatars rendered in Chromium match the Node snapshots', async ({ pa
   await expect(page.locator('body[data-ready="true"]')).toBeAttached();
   const outputs = JSON.parse((await page.locator('#golden').textContent()) ?? '{}') as Record<string, string>;
   const keys = Object.keys(outputs);
-  expect(keys).toHaveLength(72);
+  expect(keys).toHaveLength(216);
   for (const key of keys) {
     expect(outputs[key], key).toBe(readFileSync(`${golden}${key}.svg`, 'utf8'));
   }

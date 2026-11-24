@@ -32,10 +32,38 @@ export function BotRow({ name }: { name: string }) {
 | `title`     | none      | Accessible name. Without it the avatar is `aria-hidden`, which is right when a visible name sits next to it. |
 | `idPrefix`  | `''`      | Prefix for the ids inside the SVG.                                                                           |
 | `normalize` | `true`    | Ignore case, spacing and Unicode form differences in `name`.                                                 |
+| `variant`   | `'tile'`  | `'standalone'` draws the whole character with no background. `radius` is then ignored.                       |
+| `animated`  | `false`   | Animates a standalone avatar.                                                                                |
+| `state`     | `'idle'`  | `idle`, `thinking`, `working`, `success`, `error` or `sleeping`. Only applies when `animated`.               |
+| `mono`      | `false`   | Draws in greys only.                                                                                         |
 
-Any other SVG prop (`className`, `style`, `onClick`, `aria-label`, `width`, …) goes to the root `<svg>`, and the component forwards its `ref` to that element. A prop you pass wins over the generated value, so `width={64}` overrides `size` for the width only. `viewBox`, `xmlns` and `children` are fixed, and the component ignores them if you pass them.
+Any other SVG prop (`style`, `onClick`, `aria-label`, `width`, …) goes to the root `<svg>`, and the component forwards its `ref` to that element. A prop you pass wins over the generated value, so `width={64}` overrides `size` for the width only. A `className` is added to the avatar's own classes. `viewBox`, `xmlns`, `children`, `data-state` and `data-mono` are fixed, and the component ignores them if you pass them.
 
-The avatar is only regenerated when one of the props above changes.
+The avatar is only regenerated when one of the props above, other than `state`, changes.
+
+### Animated characters
+
+```tsx
+import { Avatar } from '@markwylde/chara-react';
+
+type BotStatus = 'idle' | 'thinking' | 'working' | 'success' | 'error' | 'sleeping';
+
+function BotHero({ name, status, offline }: { name: string; status: BotStatus; offline: boolean }) {
+  return (
+    <Avatar
+      name={name}
+      theme="critter"
+      variant="standalone"
+      size={240}
+      animated
+      state={status}
+      mono={offline}
+    />
+  );
+}
+```
+
+Changing `state` only changes one attribute on the same `<svg>`, so nothing is rebuilt. The animation needs no CSS import and stands still for people who prefer reduced motion.
 
 ## `useAvatarDataUri`
 

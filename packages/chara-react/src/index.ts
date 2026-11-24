@@ -1,8 +1,11 @@
 import {
   ALLOWED_ATTRIBUTES,
   type AvatarOptions,
+  type AvatarState,
+  type AvatarVariant,
   createAvatarDataUri,
   createAvatarTree,
+  resolveState,
   type SvgChild,
   type SvgNode,
   type Theme,
@@ -10,10 +13,17 @@ import {
 } from '@markwylde/chara';
 import { createElement, forwardRef, type ReactNode, type SVGProps, useMemo } from 'react';
 
-export type { AvatarOptions, Theme, ThemeId } from '@markwylde/chara';
+export type { AvatarOptions, AvatarState, AvatarVariant, Theme, ThemeId } from '@markwylde/chara';
 
 /** Props the component controls itself; passing them has no effect. */
-const RESERVED = new Set(['viewBox', 'xmlns', 'children', 'dangerouslySetInnerHTML']);
+const RESERVED = new Set([
+  'viewBox',
+  'xmlns',
+  'children',
+  'dangerouslySetInnerHTML',
+  'data-state',
+  'data-mono',
+]);
 
 type ForwardedSvgProps = Omit<
   SVGProps<SVGSVGElement>,
@@ -35,6 +45,14 @@ export interface AvatarProps extends ForwardedSvgProps {
   idPrefix?: string;
   /** Normalise the name before seeding. Default true. */
   normalize?: boolean;
+  /** "tile" (default) or "standalone": the whole character with no background. */
+  variant?: AvatarVariant;
+  /** Animate a standalone avatar. Default false. */
+  animated?: boolean;
+  /** What an animated avatar is doing. Default "idle". Changing it does not rebuild the avatar. */
+  state?: AvatarState;
+  /** Draw in greys only. Default false. */
+  mono?: boolean;
 }
 
 /** Converts a Chara attribute name to the prop name React expects. */
@@ -62,26 +80,46 @@ export function renderNode(node: SvgChild, key?: number): ReactNode {
 
 /** Renders the avatar for a name as an inline SVG. */
 export const Avatar = forwardRef<SVGSVGElement, AvatarProps>(function Avatar(props, ref) {
-  const { name, theme, size, radius, title, idPrefix, normalize, ...rest } = props;
+  const { name, theme, size, radius, title, idPrefix, normalize, variant, animated, state, mono, ...rest } =
+    props;
+  // The state is not part of the tree: every state's rules are already in the
+  // stylesheet, so a change only flips data-state and nothing is rebuilt.
   const tree: SvgNode = useMemo(
-    () => createAvatarTree(name, { theme, size, radius, title, idPrefix, normalize }),
-    [name, theme, size, radius, title, idPrefix, normalize],
+    () =>
+      createAvatarTree(name, { theme, size, radius, title, idPrefix, normalize, variant, animated, mono }),
+    [name, theme, size, radius, title, idPrefix, normalize, variant, animated, mono],
   );
+  const children = useMemo(() => renderChildren(tree.children), [tree]);
+  const currentState = resolveState(state);
   const callerProps: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(rest)) if (!RESERVED.has(key)) callerProps[key] = value;
-  const rootProps = toProps(tree.attrs);
+  const rootProps: Record<string, unknown> = toProps(tree.attrs);
+  if (animated) rootProps['data-state'] = currentState;
+  const className = [rootProps.className, callerProps.className].filter(Boolean).join(' ') || undefined;
   return createElement(
     'svg',
-    { ...rootProps, ...callerProps, viewBox: rootProps.viewBox, xmlns: rootProps.xmlns, ref },
-    ...renderChildren(tree.children),
+    { ...rootProps, ...callerProps, className, viewBox: rootProps.viewBox, xmlns: rootProps.xmlns, ref },
+    ...children,
   );
 });
 
 /** The avatar as a `data:image/svg+xml` URI, for `<img>`, CSS backgrounds or favicons. */
 export function useAvatarDataUri(name: string, options: AvatarOptions = {}): string {
-  const { theme, size, radius, title, idPrefix, normalize } = options;
+  const { theme, size, radius, title, idPrefix, normalize, variant, animated, state, mono } = options;
   return useMemo(
-    () => createAvatarDataUri(name, { theme, size, radius, title, idPrefix, normalize }),
-    [name, theme, size, radius, title, idPrefix, normalize],
+    () =>
+      createAvatarDataUri(name, {
+        theme,
+        size,
+        radius,
+        title,
+        idPrefix,
+        normalize,
+        variant,
+        animated,
+        state,
+        mono,
+      }),
+    [name, theme, size, radius, title, idPrefix, normalize, variant, animated, state, mono],
   );
 }

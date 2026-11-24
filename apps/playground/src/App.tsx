@@ -1,9 +1,9 @@
-import { createAvatar, type ThemeId } from '@markwylde/chara';
+import { type AvatarState, createAvatar, STATES, type ThemeId } from '@markwylde/chara';
 import { Avatar } from '@markwylde/chara-react';
 import { useEffect, useRef, useState } from 'react';
 import { copyText } from './clipboard';
 import { BOT_NAMES, SAMPLE_NAMES } from './names';
-import { buildReactSnippet } from './snippet';
+import { buildReactSnippet, effectiveOptions } from './snippet';
 
 const THEMES: { id: ThemeId; label: string; blurb: string }[] = [
   {
@@ -14,7 +14,8 @@ const THEMES: { id: ThemeId; label: string; blurb: string }[] = [
   {
     id: 'critter',
     label: 'Critter',
-    blurb: 'Soft creatures rising from the bottom edge. The body outline itself is generated from the name.',
+    blurb:
+      'Soft creatures whose body outline is generated from the name. Standalone, they get feet and arms.',
   },
   {
     id: 'sigil',
@@ -30,6 +31,10 @@ export function App() {
   const [name, setName] = useState('Maple');
   const [size, setSize] = useState(96);
   const [radius, setRadius] = useState(24);
+  const [standalone, setStandalone] = useState(false);
+  const [animate, setAnimate] = useState(false);
+  const [state, setState] = useState<AvatarState>('idle');
+  const [mono, setMono] = useState(false);
   const [galleryTheme, setGalleryTheme] = useState<ThemeId>('mecha');
   const [notice, setNotice] = useState<Notice>(null);
   const fallbackRef = useRef<HTMLTextAreaElement>(null);
@@ -42,6 +47,9 @@ export function App() {
   }, [notice]);
 
   const label = name.trim() || 'Unnamed';
+  // What is actually drawn and copied: animation only ever applies to standalone avatars.
+  const look = effectiveOptions({ standalone, animate, state, mono });
+  const still = effectiveOptions({ standalone, animate: false, state, mono });
 
   const copy = async (text: string, what: string) => {
     const result = await copyText(text);
@@ -92,7 +100,7 @@ export function App() {
               id="size-input"
               type="range"
               min={16}
-              max={160}
+              max={360}
               value={size}
               onChange={(e) => setSize(Number(e.target.value))}
             />
@@ -109,6 +117,59 @@ export function App() {
               value={radius}
               onChange={(e) => setRadius(Number(e.target.value))}
             />
+          </label>
+          <div className="field">
+            <span id="variant-label">Variant</span>
+            <fieldset className="segmented" aria-labelledby="variant-label">
+              {[false, true].map((value) => (
+                <label key={String(value)} className={standalone === value ? 'on' : undefined}>
+                  <input
+                    type="radio"
+                    name="variant"
+                    checked={standalone === value}
+                    onChange={() => setStandalone(value)}
+                  />
+                  {value ? 'Standalone' : 'Tile'}
+                </label>
+              ))}
+            </fieldset>
+          </div>
+          <div className="field toggles">
+            <label className="check">
+              <input
+                id="animate-input"
+                type="checkbox"
+                checked={animate}
+                disabled={!standalone}
+                onChange={(e) => setAnimate(e.target.checked)}
+              />
+              Animate
+            </label>
+            <label className="check">
+              <input
+                id="mono-input"
+                type="checkbox"
+                checked={mono}
+                onChange={(e) => setMono(e.target.checked)}
+              />
+              No colour
+            </label>
+          </div>
+          <label className="field">
+            <span>State</span>
+            <select
+              id="state-input"
+              value={state}
+              disabled={!standalone || !animate}
+              onChange={(e) => setState(e.target.value as AvatarState)}
+            >
+              {STATES.map((value) => (
+                <option key={value} value={value}>
+                  {value[0]?.toUpperCase()}
+                  {value.slice(1)}
+                </option>
+              ))}
+            </select>
           </label>
         </form>
       </header>
@@ -144,7 +205,7 @@ export function App() {
                 <button
                   type="button"
                   onClick={() =>
-                    copy(createAvatar(name, { theme: theme.id, size, radius }), `${theme.label} SVG`)
+                    copy(createAvatar(name, { theme: theme.id, size, radius, ...look }), `${theme.label} SVG`)
                   }
                 >
                   Copy SVG
@@ -153,7 +214,7 @@ export function App() {
                   type="button"
                   onClick={() =>
                     copy(
-                      buildReactSnippet({ name, theme: theme.id, size, radius }),
+                      buildReactSnippet({ name, theme: theme.id, size, radius, ...look }),
                       `${theme.label} React snippet`,
                     )
                   }
@@ -170,11 +231,12 @@ export function App() {
                   size={size}
                   radius={radius}
                   title={`${label}, ${theme.label}`}
+                  {...look}
                 />
                 <figcaption>{label} on light</figcaption>
               </figure>
               <figure className="surface dark">
-                <Avatar name={name} theme={theme.id} size={size} radius={radius} />
+                <Avatar name={name} theme={theme.id} size={size} radius={radius} {...look} />
                 <figcaption>{label} on dark</figcaption>
               </figure>
               <div className="sidebars">
@@ -190,6 +252,7 @@ export function App() {
                           theme={theme.id}
                           size={20}
                           radius={Math.min(radius, 50) * 0.5 + 4}
+                          {...still}
                         />
                         <span>{bot}</span>
                       </li>
@@ -225,7 +288,7 @@ export function App() {
         <ul className="grid" data-gallery-theme={galleryTheme}>
           {SAMPLE_NAMES.map((sample) => (
             <li key={sample}>
-              <Avatar name={sample} theme={galleryTheme} radius={radius} />
+              <Avatar name={sample} theme={galleryTheme} radius={radius} {...still} />
               <span>{sample}</span>
             </li>
           ))}

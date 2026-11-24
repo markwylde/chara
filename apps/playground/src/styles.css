@@ -395,3 +395,48 @@ button:hover {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* Variant, animation and colour controls */
+.controls .segmented {
+  align-self: flex-start;
+}
+.field.toggles {
+  flex-direction: row;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font: 500 14px / 1 var(--body);
+  cursor: pointer;
+}
+.check input {
+  accent-color: var(--accent);
+  width: 16px;
+  height: 16px;
+  margin: 0;
+}
+.check:has(input:disabled) {
+  color: var(--muted);
+  cursor: not-allowed;
+}
+.field select {
+  font: 500 15px / 1 var(--body);
+  color: var(--fg);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px 10px;
+  width: 100%;
+}
+.field select:disabled {
+  color: var(--muted);
+  opacity: 0.6;
+}
+.surface {
+  min-width: 0;
+  /* Standalone characters hop and glow past their box. */
+  overflow: hidden;
+}

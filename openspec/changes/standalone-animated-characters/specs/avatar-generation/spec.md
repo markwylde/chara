@@ -62,6 +62,13 @@ The library SHALL accept `animated` (default false) and `state` options. The sta
 - **WHEN** an animated standalone avatar is produced as a data URI and loaded in an `<img>` in a browser
 - **THEN** the image renders and its animations run
 
+### Requirement: Error state glows
+In the `error` state the character SHALL keep its own colours and gain a pulsing red glow around its body. It SHALL NOT be dimmed or desaturated. With `mono`, the glow SHALL be grey.
+
+#### Scenario: Error glow
+- **WHEN** an animated Critter is shown in a browser in the `error` state
+- **THEN** its body has a red drop-shadow glow and its fill colour is unchanged
+
 ### Requirement: Animation option validation
 `animated: true` SHALL require the standalone variant and throw a `TypeError` otherwise. An unknown state SHALL throw a `TypeError`. Without `animated`, the output SHALL contain no stylesheet and no `data-state`, whatever `state` is given.
 
@@ -111,10 +118,14 @@ The library SHALL accept a `mono` option (default false) that draws the avatar i
 - **THEN** its stylesheet applies no non-grey colour
 
 ### Requirement: Custom theme characters
-A custom theme SHALL be able to define a standalone drawing and optional animation CSS. Requesting the standalone variant from a theme that does not define one SHALL throw a `TypeError`.
+A custom theme SHALL be able to define a standalone drawing and optional animation CSS. Requesting the standalone variant from a theme that does not define a character, or animation from a theme with no animation CSS, SHALL throw a `TypeError`.
 
 #### Scenario: Theme without a character
 - **WHEN** a custom theme with only a tile drawing is used with `variant: "standalone"`
+- **THEN** a `TypeError` naming the theme is thrown
+
+#### Scenario: Character without animation CSS
+- **WHEN** a custom theme that defines a character but no animation CSS is generated with `animated: true`
 - **THEN** a `TypeError` naming the theme is thrown
 
 #### Scenario: Custom animated character

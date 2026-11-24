@@ -34,6 +34,25 @@ describe('ids across inlined avatars', () => {
     expect(all.size).toBeGreaterThan(0);
   });
 
+  it('never clash between tile, standalone and mono versions', () => {
+    const all = new Map<string, string>();
+    for (const theme of THEME_IDS) {
+      for (const variant of ['tile', 'standalone'] as const) {
+        for (const mono of [false, true]) {
+          for (const animated of variant === 'standalone' ? [false, true] : [false]) {
+            const svg = createAvatar('Claudette', { theme, variant, mono, animated });
+            for (const [id, content] of definedIds(svg)) {
+              const existing = all.get(id);
+              if (existing !== undefined) expect(existing).toBe(content);
+              all.set(id, content);
+            }
+          }
+        }
+      }
+    }
+    expect(all.size).toBeGreaterThan(6);
+  });
+
   it('share no id for the same name at different radii', () => {
     for (const theme of THEME_IDS) {
       const a = [...definedIds(createAvatar('Claudette', { theme, radius: 0 })).keys()];

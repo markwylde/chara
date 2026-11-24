@@ -29,20 +29,52 @@ export interface ThemeContext {
   f1: typeof f1;
 }
 
+/** What a theme's character function returns: the standalone figure, with no background. */
+export interface ThemeCharacter {
+  /** Nodes drawn on the bare 100×100 canvas. */
+  content: SvgNode[];
+}
+
 export interface Theme {
   readonly id: string;
   draw(ctx: ThemeContext): ThemeDrawing;
+  /** Draws the standalone character. Without it, `variant: "standalone"` is unavailable. */
+  readonly character?: (ctx: ThemeContext) => ThemeCharacter;
+  /**
+   * CSS for animated standalone avatars, covering every state. Each selector
+   * must start with `.chara-<id>[data-state` and each keyframes name with
+   * `chara-<id>-`; see `checkAnimationCss`.
+   */
+  readonly animation?: string;
+}
+
+export interface ThemeDefinition {
+  id: string;
+  draw(ctx: ThemeContext): ThemeDrawing;
+  character?: (ctx: ThemeContext) => ThemeCharacter;
+  animation?: string;
 }
 
 const THEME_ID_RE = /^[a-z][a-z0-9-]*$/;
 
 /** Defines a theme. Ids are lowercase letters, digits and hyphens, starting with a letter. */
-export function defineTheme(theme: { id: string; draw(ctx: ThemeContext): ThemeDrawing }): Theme {
+export function defineTheme(theme: ThemeDefinition): Theme {
   if (typeof theme?.id !== 'string' || !THEME_ID_RE.test(theme.id)) {
     throw new TypeError(
       `Invalid theme id ${JSON.stringify(theme?.id)}: use lowercase letters, digits and hyphens, starting with a letter`,
     );
   }
   if (typeof theme.draw !== 'function') throw new TypeError(`Theme "${theme.id}" needs a draw function`);
-  return Object.freeze({ id: theme.id, draw: theme.draw });
+  if (theme.character !== undefined && typeof theme.character !== 'function') {
+    throw new TypeError(`Theme "${theme.id}": character must be a function`);
+  }
+  if (theme.animation !== undefined && typeof theme.animation !== 'string') {
+    throw new TypeError(`Theme "${theme.id}": animation must be a CSS string`);
+  }
+  return Object.freeze({
+    id: theme.id,
+    draw: theme.draw,
+    ...(theme.character ? { character: theme.character } : {}),
+    ...(theme.animation !== undefined ? { animation: theme.animation } : {}),
+  });
 }

@@ -69,7 +69,7 @@ Alternatives considered: a separate `.css` file the host must import (breaks dat
 
 ### Mono
 
-`mono` swaps the context's `hsl` helper for one that returns the grey with the same perceived lightness (Rec. 601 luma of the colour it would have produced). Because it is real colour data, not a CSS filter, it works for tiles, images and non-animated output. Built-in themes use only helper colours plus neutral literals (`#fff`, the black shadow), so they are fully grey. For custom themes the guarantee stops at the helper: literal colours pass through. With mono, each built-in stylesheet replaces the error state's red with a grey under `[data-mono]`.
+`mono` swaps the context's `hsl` helper for one that returns the grey with the same perceived lightness (Rec. 601 luma of the colour it would have produced). Because it is real colour data, not a CSS filter, it works for tiles, images and non-animated output. Built-in themes use only helper colours plus neutral literals (`#fff`, the black shadow), so they are fully grey. For custom themes the guarantee stops at the helper: literal colours pass through. The error state is a shake plus a pulsing `drop-shadow` glow on the body (the owner asked for a red glow instead of the proof of concept's dimmed Critter), with red lights on Mecha and red strokes on Sigil. With mono, each built-in stylesheet replaces that red with a grey under `[data-mono]`.
 
 ### Identifiers
 

@@ -20,6 +20,7 @@ export default defineConfig({
       input: {
         main: fileURLToPath(new URL('index.html', import.meta.url)),
         golden: fileURLToPath(new URL('golden.html', import.meta.url)),
+        lab: fileURLToPath(new URL('lab.html', import.meta.url)),
       },
     },
   },
