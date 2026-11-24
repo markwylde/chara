@@ -1,0 +1,42 @@
+{
+  "name": "chara-monorepo",
+  "private": true,
+  "description": "Deterministic SVG avatars from a name.",
+  "license": "MIT",
+  "type": "module",
+  "workspaces": [
+    "packages/chara",
+    "packages/chara-react",
+    "apps/playground"
+  ],
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "check": "biome check .",
+    "format": "biome check --write .",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "build": "npm run build -w @markwylde/chara && npm run build -w @markwylde/chara-react && npm run build -w playground",
+    "test:packed": "node scripts/packed-consumer.mjs",
+    "test:e2e": "npm run build && npm run test:e2e -w playground"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.6.9",
+    "@playwright/test": "^1.65.1",
+    "@testing-library/react": "^16.3.3",
+    "@types/node": "^24.19.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "@xmldom/xmldom": "^0.9.12",
+    "esbuild": "^0.28.2",
+    "jsdom": "^31.0.1",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "tsup": "^9.0.0",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.1"
+  }
+}

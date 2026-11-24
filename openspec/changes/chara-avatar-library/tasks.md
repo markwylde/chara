@@ -3,29 +3,29 @@
 ## 1. Repository setup
 
 - [x] 1.1 Make an initial commit on `main` with the OpenSpec scaffolding, then create a git worktree on branch `feat/chara-avatar-library`; verify with `git worktree list`
-- [ ] 1.2 Add the root `package.json` (private, npm workspaces `packages/*` and `apps/*`, Node ≥20 engines), `.gitignore`, MIT `LICENSE`, `tsconfig.base.json` (strict) and `biome.json`; verify that `npm install` succeeds and `npx biome check .` runs
-- [ ] 1.3 Scaffold `packages/chara` (entries `.`, `./core`, `./themes/*`) and `packages/chara-react` (externals `react`, `react/jsx-runtime` and `@markwylde/chara`) with `package.json` (`exports`, `sideEffects: false`, `files: ["dist"]`, `publishConfig.access: public`), tsup and Vitest configs; verify that `npm run build -ws` creates ESM, CJS and `.d.ts` files for every entry
+- [x] 1.2 Add the root `package.json` (private, npm workspaces `packages/*` and `apps/*`, Node ≥20 engines), `.gitignore`, MIT `LICENSE`, `tsconfig.base.json` (strict) and `biome.json`; verify that `npm install` succeeds and `npx biome check .` runs
+- [x] 1.3 Scaffold `packages/chara` (entries `.`, `./core`, `./themes/*`) and `packages/chara-react` (externals `react`, `react/jsx-runtime` and `@markwylde/chara`) with `package.json` (`exports`, `sideEffects: false`, `files: ["dist"]`, `publishConfig.access: public`), tsup and Vitest configs; verify that `npm run build -ws` creates ESM, CJS and `.d.ts` files for every entry
 - [ ] 1.4 Add the root scripts `check`, `typecheck`, `test` and `build`; verify each runs green
 
 ## 2. Core engine (`@markwylde/chara`)
 
-- [ ] 2.1 Implement name normalisation (NFC, trim, collapse whitespace, locale-independent lowercase, empty → "chara", `normalize: false` path) with tests for every spec scenario, including NFC-equivalent strings and an empty raw name
-- [ ] 2.2 Implement cyrb128 + sfc32 seeded random (`f`, `int`, `pick`, `range`, `chance`) with tests for repeatability, order independence and per-theme namespacing
-- [ ] 2.3 Implement `SvgNode`, `el` and `serialize` (attribute and text escaping, removal of XML-invalid characters, stable attribute order, self-closing empty elements), with tests
-- [ ] 2.4 Implement the colour helper (`hsl` → `#rrggbb`), `f1`, `mirrorX` and `smoothClosedPath`, with tests against known values
-- [ ] 2.5 Implement the safety allowlist (tags, attributes, local-only `url(#id)` references that must resolve within the document, text only in `title`) and `CharaSafetyError`, with rejection tests for `script`, `foreignObject`, `on*`, `style`, `href`, external `url()` and dangling references
-- [ ] 2.6 Implement `ThemeContext` (`rand`, `hsl`, `id`, `ref`, `def`, `el`, `mirrorX`, `smoothClosedPath`, `f1`), `defineTheme` with id validation, and the frame. The frame covers size validation (RangeError), radius clamp and default, title trimming with `role="img"` or `aria-hidden`, option-aware 64-bit IDs, `idPrefix` validation, the clip path and the background. Test with one-circle and gradient-background custom themes, covering every option edge case in the spec
-- [ ] 2.7 Implement the `/core` entry (`createAvatarTree`, `createAvatar`, `createAvatarDataUri`, which need a theme object and run validation) and the root entry (id or object, defaulting to Mecha, with the unknown-id error). Test tree/string equality, the data URI round-trip, and well-formed XML (`@xmldom/xmldom`)
+- [x] 2.1 Implement name normalisation (NFC, trim, collapse whitespace, locale-independent lowercase, empty → "chara", `normalize: false` path) with tests for every spec scenario, including NFC-equivalent strings and an empty raw name
+- [x] 2.2 Implement cyrb128 + sfc32 seeded random (`f`, `int`, `pick`, `range`, `chance`) with tests for repeatability, order independence and per-theme namespacing
+- [x] 2.3 Implement `SvgNode`, `el` and `serialize` (attribute and text escaping, removal of XML-invalid characters, stable attribute order, self-closing empty elements), with tests
+- [x] 2.4 Implement the colour helper (`hsl` → `#rrggbb`), `f1`, `mirrorX` and `smoothClosedPath`, with tests against known values
+- [x] 2.5 Implement the safety allowlist (tags, attributes, local-only `url(#id)` references that must resolve within the document, text only in `title`) and `CharaSafetyError`, with rejection tests for `script`, `foreignObject`, `on*`, `style`, `href`, external `url()` and dangling references
+- [x] 2.6 Implement `ThemeContext` (`rand`, `hsl`, `id`, `ref`, `def`, `el`, `mirrorX`, `smoothClosedPath`, `f1`), `defineTheme` with id validation, and the frame. The frame covers size validation (RangeError), radius clamp and default, title trimming with `role="img"` or `aria-hidden`, option-aware 64-bit IDs, `idPrefix` validation, the clip path and the background. Test with one-circle and gradient-background custom themes, covering every option edge case in the spec
+- [x] 2.7 Implement the `/core` entry (`createAvatarTree`, `createAvatar`, `createAvatarDataUri`, which need a theme object and run validation) and the root entry (id or object, defaulting to Mecha, with the unknown-id error). Test tree/string equality, the data URI round-trip, and well-formed XML (`@xmldom/xmldom`)
 
 ## 3. Themes
 
-- [ ] 3.1 Port Mecha from `reference/poc.html` to the theme context, keeping the order of random calls. Add golden SVG snapshots for the 24 proof-of-concept names, and check them side by side against the proof of concept
-- [ ] 3.2 Port Critter, including the clip-path markings registered through `ctx.def`. Add golden snapshots, and test that the outline is symmetric and differs between two names
-- [ ] 3.3 Port Sigil with an injectable random source, the 30-attempt retry and the fixed fallback walk. Add golden snapshots, plus tests for mirror symmetry, the off-centre property over 1,000 names and a forced exhaustion test of the fallback
-- [ ] 3.4 Add an ID test that inlines 20 names × 3 themes × radii 0/24/50 into one document and asserts no ID is defined twice with different content, including a check that "Claudette" at radius 0 and at radius 50 share no ID
-- [ ] 3.5 Add the 10,000-name collision test using normalised-name deduplication and ID canonicalisation; verify it passes in under 10 seconds
-- [ ] 3.6 Add the tree-shaking test that bundles the documented `/core` + `/themes/sigil` example with esbuild and asserts the metafile has no Mecha or Critter modules
-- [ ] 3.7 Write `packages/chara/README.md` (install, API, options and their validation, entry points, custom themes and the allowlist, stability rule) and verify that its code samples compile in a typechecked docs test file
+- [x] 3.1 Port Mecha from `reference/poc.html` to the theme context, keeping the order of random calls. Add golden SVG snapshots for the 24 proof-of-concept names, and check them side by side against the proof of concept
+- [x] 3.2 Port Critter, including the clip-path markings registered through `ctx.def`. Add golden snapshots, and test that the outline is symmetric and differs between two names
+- [x] 3.3 Port Sigil with an injectable random source, the 30-attempt retry and the fixed fallback walk. Add golden snapshots, plus tests for mirror symmetry, the off-centre property over 1,000 names and a forced exhaustion test of the fallback
+- [x] 3.4 Add an ID test that inlines 20 names × 3 themes × radii 0/24/50 into one document and asserts no ID is defined twice with different content, including a check that "Claudette" at radius 0 and at radius 50 share no ID
+- [x] 3.5 Add the collision tests using normalised-name deduplication and ID canonicalisation: zero collisions across 1,000 names, and under 10 per theme across 10,000 names. Verify they pass in under 10 seconds
+- [x] 3.6 Add the tree-shaking test that bundles the documented `/core` + `/themes/sigil` example with esbuild and asserts the metafile has no Mecha or Critter modules
+- [x] 3.7 Write `packages/chara/README.md` (install, API, options and their validation, entry points, custom themes and the allowlist, stability rule) and verify that its code samples compile in a typechecked docs test file
 
 ## 4. React package (`@markwylde/chara-react`)
 

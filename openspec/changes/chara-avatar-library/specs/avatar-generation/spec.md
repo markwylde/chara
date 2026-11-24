@@ -90,10 +90,14 @@ Every Sigil glyph SHALL have at least three strokes that leave the centre column
 - **THEN** the fallback glyph is drawn, and it has at least three strokes off the centre column
 
 ### Requirement: Distinct avatars across names
-Within each built-in theme, different normalised names SHALL produce visually different drawings, with collisions rare in practice. Distinctness SHALL be judged on drawing content with element IDs and ID references canonicalised, so that differing IDs alone never count as a difference.
+Within each built-in theme, different normalised names SHALL produce different drawings at a measured collision rate below 1 in 1,000 names in a 10,000-name sample. Distinctness SHALL be judged on drawing content with element IDs and ID references canonicalised, so differing IDs alone never count as a difference. Themes built only from discrete parts (Mecha) can repeat a face at scale, and this rate bounds how often.
 
-#### Scenario: No collisions in a sample
+#### Scenario: Collision rate in a sample
 - **WHEN** canonicalised drawings are generated in each built-in theme for 10,000 distinct normalised names
+- **THEN** fewer than 10 names in each theme share their drawing with an earlier name
+
+#### Scenario: Small sets are unique
+- **WHEN** canonicalised drawings are generated in each built-in theme for 1,000 distinct normalised names
 - **THEN** no two names in the same theme produce identical drawings
 
 ### Requirement: SVG string output

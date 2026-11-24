@@ -1,0 +1,57 @@
+{
+  "name": "@markwylde/chara-react",
+  "version": "0.1.0",
+  "description": "React component for Chara deterministic SVG avatars.",
+  "license": "MIT",
+  "author": "Mark Wylde",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/markwylde/chara.git",
+    "directory": "packages/chara-react"
+  },
+  "homepage": "https://markwylde.github.io/chara/",
+  "keywords": [
+    "avatar",
+    "identicon",
+    "svg",
+    "react"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@markwylde/chara": "^0.1.0"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  }
+}
