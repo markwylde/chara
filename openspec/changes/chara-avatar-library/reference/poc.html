@@ -1,0 +1,463 @@
+<title>Chara Avatar Themes</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+  /* Layout: one column of five theme sheets; each sheet = notes on the left, the four real bots large on the right, then sidebar-size proof and a crowd. */
+  :root {
+    --bg: #0c0f15;
+    --panel: #141821;
+    --line: #232937;
+    --fg: #e4e7ee;
+    --muted: #8b93a5;
+    --accent: #7ea6ff;
+    --term-dark: #11141b;
+    --term-dark-fg: #d5d9e3;
+    --term-dark-sel: #1e232e;
+    --term-light: #f3f4f8;
+    --term-light-fg: #232733;
+    --term-light-sel: #e2e5ee;
+    --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+    --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #f5f6fa; --panel: #ffffff; --line: #dde0ea; --fg: #1b1f2a; --muted: #5f6779; --accent: #2f5fd6;
+      color-scheme: light;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #f5f6fa; --panel: #ffffff; --line: #dde0ea; --fg: #1b1f2a; --muted: #5f6779; --accent: #2f5fd6;
+    color-scheme: light;
+  }
+
+  body {
+    background: var(--bg); color: var(--fg);
+    font: 400 15px/1.55 var(--body);
+    padding-block: 40px 72px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  .wrap { max-width: 1040px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+
+  header { display: flex; flex-wrap: wrap; gap: 20px 40px; align-items: flex-end; justify-content: space-between; }
+  header > div { min-width: 0; flex: 1 1 320px; }
+  h1 { font: 700 clamp(28px, 5vw, 40px)/1.1 var(--display); letter-spacing: -0.02em; margin: 0 0 10px; text-wrap: balance; }
+  header p { margin: 0; color: var(--muted); max-width: 56ch; }
+  .try { flex: 0 1 260px; display: flex; flex-direction: column; gap: 6px; }
+  .try label { font: 500 11px/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .try input {
+    font: 500 16px/1 var(--body); color: var(--fg); background: var(--panel);
+    border: 1px solid var(--line); border-radius: 8px; padding: 11px 12px; width: 100%; box-sizing: border-box;
+  }
+  .try input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  .sheet { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 24px; display: flex; flex-direction: column; gap: 22px; }
+  .top { display: grid; grid-template-columns: minmax(0, 250px) minmax(0, 1fr); gap: 24px 36px; align-items: center; }
+  .notes { min-width: 0; }
+  .notes h2 { font: 600 24px/1.15 var(--display); letter-spacing: -0.01em; margin: 0 0 6px; }
+  .notes p { margin: 0 0 10px; color: var(--muted); font-size: 14px; }
+  .notes .parts { font: 400 12px/1.6 var(--mono); color: var(--muted); margin: 0; }
+  .notes .parts b { color: var(--fg); font-weight: 500; }
+
+  .heroes { display: flex; flex-wrap: wrap; gap: 16px 18px; justify-content: flex-end; }
+  .hero { display: flex; flex-direction: column; gap: 8px; align-items: center; width: clamp(64px, 17vw, 96px); min-width: 0; }
+  .hero .av { width: 100%; aspect-ratio: 1; }
+  .hero span { font: 500 12px/1.2 var(--mono); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hero.custom span { color: var(--accent); }
+  .av svg { display: block; width: 100%; height: 100%; }
+
+  .proof { display: grid; grid-template-columns: 170px 170px minmax(0, 1fr); gap: 16px; align-items: start; border-top: 1px solid var(--line); padding-top: 20px; }
+  .side { border-radius: 10px; padding: 8px; display: flex; flex-direction: column; gap: 2px; font: 500 14px/1 var(--body); }
+  .side.dark { background: var(--term-dark); color: var(--term-dark-fg); }
+  .side.light { background: var(--term-light); color: var(--term-light-fg); border: 1px solid var(--line); }
+  .side .row { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 6px; min-width: 0; }
+  .side.dark .row:first-child { background: var(--term-dark-sel); }
+  .side.light .row:first-child { background: var(--term-light-sel); }
+  .side .av { width: 20px; height: 20px; flex: none; }
+  .side .row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .crowd { display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 10px; min-width: 0; }
+  .crowd .av { aspect-ratio: 1; }
+  .cap { font: 500 11px/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
+
+  @media (max-width: 760px) {
+    .sheet { padding: 18px; }
+    .top { grid-template-columns: minmax(0, 1fr); }
+    .heroes { justify-content: flex-start; }
+    .proof { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    .proof .crowdbox { grid-column: 1 / -1; }
+  }
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Five avatar themes for Chara</h1>
+      <p>Each theme turns a bot's name into an SVG built from parts. The same name always gives the same avatar. Type a name to see it in all five, then pick two.</p>
+    </div>
+    <div class="try">
+      <label for="name-input">Try a name</label>
+      <input id="name-input" type="text" value="Maple" maxlength="32" autocomplete="off" spellcheck="false">
+    </div>
+  </header>
+  <div id="sheets" style="display:flex;flex-direction:column;gap:20px"></div>
+</div>
+
+<script>
+/* ---------- hashing + seeded random ---------- */
+function hash(str) {
+  let h1 = 1779033703, h2 = 3144134277, h3 = 1013904242, h4 = 2773480762;
+  for (let i = 0, k; i < str.length; i++) {
+    k = str.charCodeAt(i);
+    h1 = h2 ^ Math.imul(h1 ^ k, 597399067);
+    h2 = h3 ^ Math.imul(h2 ^ k, 2869860233);
+    h3 = h4 ^ Math.imul(h3 ^ k, 951274213);
+    h4 = h1 ^ Math.imul(h4 ^ k, 2716044179);
+  }
+  h1 = Math.imul(h3 ^ (h1 >>> 18), 597399067);
+  h2 = Math.imul(h4 ^ (h2 >>> 22), 2869860233);
+  h3 = Math.imul(h1 ^ (h3 >>> 17), 951274213);
+  h4 = Math.imul(h2 ^ (h4 >>> 19), 2716044179);
+  h1 ^= (h2 ^ h3 ^ h4); h2 ^= h1; h3 ^= h1; h4 ^= h1;
+  return [h1 >>> 0, h2 >>> 0, h3 >>> 0, h4 >>> 0];
+}
+function seedRand(str) {
+  let [a, b, c, d] = hash(str);
+  const next = () => {
+    a |= 0; b |= 0; c |= 0; d |= 0;
+    const t = (a + b | 0) + d | 0;
+    d = d + 1 | 0; a = b ^ b >>> 9; b = c + (c << 3) | 0;
+    c = c << 21 | c >>> 11; c = c + t | 0;
+    return (t >>> 0) / 4294967296;
+  };
+  for (let i = 0; i < 12; i++) next();
+  return {
+    f: next,
+    int: n => Math.floor(next() * n),
+    pick: arr => arr[Math.floor(next() * arr.length)],
+    range: (lo, hi) => lo + next() * (hi - lo),
+    chance: p => next() < p
+  };
+}
+const hsl = (h, s, l) => `hsl(${Math.round(((h % 360) + 360) % 360)} ${s}% ${l}%)`;
+const f1 = n => +n.toFixed(1);
+let uidN = 0;
+const uid = () => 'a' + (uidN++);
+function frame(bg, inner, defs) {
+  const id = uid();
+  return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><defs><clipPath id="${id}"><rect width="100" height="100" rx="24"/></clipPath>${defs || ''}</defs><g clip-path="url(#${id})"><rect width="100" height="100" fill="${bg}"/>${inner}</g></svg>`;
+}
+const mirrorX = s => `<g transform="translate(100 0) scale(-1 1)">${s}</g>`;
+
+/* ---------- 1. Mecha: robot faces from parts ---------- */
+function mecha(name) {
+  const R = seedRand('mecha:' + name);
+  const h = R.int(360);
+  const bg = hsl(h, 62, 58);
+  const light = R.chance(0.6);
+  const shell = light ? hsl(h + 20, 35, 95) : hsl(h + 200, 35, 22);
+  const shade = light ? hsl(h + 20, 30, 80) : hsl(h + 200, 35, 13);
+  const ink = light ? hsl(h + 10, 45, 16) : hsl(h + 20, 40, 95);
+  const glow = hsl(h + R.pick([150, 180, 210, 40]), 90, 62);
+  const st = (w, c) => `fill="none" stroke="${c || shell}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"`;
+
+  const antenna = R.pick([
+    '',
+    `<path d="M50 30V17" ${st(4)}/><circle cx="50" cy="14" r="5.5" fill="${glow}"/>`,
+    `<path d="M40 30L34 17M60 30L66 17" ${st(3.5)}/><circle cx="33" cy="15" r="4.2" fill="${glow}"/><circle cx="67" cy="15" r="4.2" fill="${glow}"/>`,
+    `<path d="M50 30V24L43 20L57 15L50 10" ${st(3.5)}/>`,
+    `<path d="M50 30V22M40 13A10 10 0 0 0 60 13" ${st(3.5)}/><circle cx="50" cy="13" r="3" fill="${glow}"/>`,
+    `<rect x="37" y="22" width="26" height="9" rx="3" fill="${shade}"/><circle cx="50" cy="26" r="2.2" fill="${glow}"/>`
+  ]);
+  const ears = R.pick([
+    '',
+    `<rect x="14" y="47" width="10" height="17" rx="3.5" fill="${shade}"/><rect x="76" y="47" width="10" height="17" rx="3.5" fill="${shade}"/>`,
+    `<circle cx="20" cy="56" r="7.5" fill="${shade}"/><circle cx="80" cy="56" r="7.5" fill="${shade}"/><circle cx="15.5" cy="56" r="2" fill="${glow}"/><circle cx="84.5" cy="56" r="2" fill="${glow}"/>`
+  ]);
+  const head = R.pick([
+    `<rect x="22" y="30" width="56" height="52" rx="12" fill="${shell}"/>`,
+    `<rect x="22" y="30" width="56" height="52" rx="26" fill="${shell}"/>`,
+    `<rect x="18" y="34" width="64" height="46" rx="16" fill="${shell}"/>`,
+    `<path d="M22 56A28 28 0 0 1 78 56V74Q78 82 70 82H30Q22 82 22 74Z" fill="${shell}"/>`,
+    `<path d="M35 33H65L77 56L65 79H35L23 56Z" fill="${shell}" stroke="${shell}" stroke-width="6" stroke-linejoin="round"/>`,
+    `<path d="M30 33H70L77 79H23Z" fill="${shell}" stroke="${shell}" stroke-width="6" stroke-linejoin="round"/>`
+  ]);
+  const gx = R.range(-2.5, 2.5), gy = R.range(-2, 2);
+  const eyes = R.pick([
+    `<circle cx="38" cy="52" r="5" fill="${ink}"/><circle cx="62" cy="52" r="5" fill="${ink}"/>`,
+    `<circle cx="38" cy="52" r="8.5" fill="${ink}"/><circle cx="62" cy="52" r="8.5" fill="${ink}"/><circle cx="${f1(38 + gx)}" cy="${f1(52 + gy)}" r="3.5" fill="${glow}"/><circle cx="${f1(62 + gx)}" cy="${f1(52 + gy)}" r="3.5" fill="${glow}"/>`,
+    `<rect x="30" y="45" width="40" height="14" rx="7" fill="${ink}"/><circle cx="40" cy="52" r="3" fill="${glow}"/><circle cx="60" cy="52" r="3" fill="${glow}"/>`,
+    `<rect x="32.5" y="46.5" width="11" height="11" rx="2.5" fill="${ink}"/><rect x="56.5" y="46.5" width="11" height="11" rx="2.5" fill="${ink}"/>`,
+    `<circle cx="50" cy="51" r="11" fill="${ink}"/><circle cx="${f1(50 + gx)}" cy="${f1(51 + gy)}" r="5" fill="${glow}"/>`,
+    `<path d="M32 54Q38 47 44 54M56 54Q62 47 68 54" ${st(3.5, ink)}/>`,
+    `<circle cx="38" cy="52" r="8" fill="${ink}"/><circle cx="38" cy="52" r="3.2" fill="${glow}"/><circle cx="62" cy="52" r="4.5" fill="${ink}"/>`
+  ]);
+  const mouth = R.pick([
+    `<path d="M42 70H58" ${st(3.5, ink)}/>`,
+    `<path d="M40 67Q50 76 60 67" ${st(3.5, ink)}/>`,
+    `<rect x="38" y="65" width="24" height="9" rx="2.5" fill="${ink}"/><path d="M44 65V74M50 65V74M56 65V74" ${st(1.8)}/>`,
+    `<circle cx="50" cy="70" r="3.5" fill="${ink}"/>`,
+    `<path d="M40 70L45 66L50 70L55 66L60 70" ${st(3.2, ink)}/>`,
+    ''
+  ]);
+  const extra = R.pick([
+    '',
+    `<circle cx="31" cy="64" r="3.5" fill="${glow}" opacity=".6"/><circle cx="69" cy="64" r="3.5" fill="${glow}" opacity=".6"/>`,
+    `<circle cx="50" cy="38" r="2.2" fill="${shade}"/>`
+  ]);
+  return frame(bg, antenna + ears + head + eyes + mouth + extra);
+}
+
+/* ---------- 2. Critter: soft blob creatures ---------- */
+function smooth(pts) {
+  const n = pts.length;
+  let d = `M${f1(pts[0][0])} ${f1(pts[0][1])}`;
+  for (let i = 0; i < n; i++) {
+    const p0 = pts[(i - 1 + n) % n], p1 = pts[i], p2 = pts[(i + 1) % n], p3 = pts[(i + 2) % n];
+    d += `C${f1(p1[0] + (p2[0] - p0[0]) / 6)} ${f1(p1[1] + (p2[1] - p0[1]) / 6)} ${f1(p2[0] - (p3[0] - p1[0]) / 6)} ${f1(p2[1] - (p3[1] - p1[1]) / 6)} ${f1(p2[0])} ${f1(p2[1])}`;
+  }
+  return d + 'Z';
+}
+function critter(name) {
+  const R = seedRand('critter:' + name);
+  const h = R.int(360);
+  const bg = hsl(h + R.pick([150, 180, 200, 40, -50]), 55, 86);
+  const body = hsl(h, 68, 56), dark = hsl(h, 55, 16), belly = hsl(h, 70, 80);
+  const accent = hsl(h + R.pick([45, -45, 180]), 82, 60);
+  const st = (w, c) => `fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"`;
+
+  const cx = 50, cy = 64, base = R.range(29, 34);
+  const rad = [-90, -45, 0, 45, 90].map(() => base * R.range(0.86, 1.1));
+  const right = [-90, -45, 0, 45, 90].map((a, i) => [cx + Math.cos(a * Math.PI / 180) * rad[i], cy + Math.sin(a * Math.PI / 180) * rad[i]]);
+  const pts = right.concat([right[3], right[2], right[1]].map(p => [100 - p[0], p[1]]));
+  const path = smooth(pts);
+  const t = f1(cy - rad[0]);
+
+  const topper = R.pick([
+    '',
+    `<circle cx="30" cy="${t + 9}" r="9.5" fill="${body}"/><circle cx="70" cy="${t + 9}" r="9.5" fill="${body}"/><circle cx="30" cy="${t + 9}" r="4.5" fill="${belly}"/><circle cx="70" cy="${t + 9}" r="4.5" fill="${belly}"/>`,
+    `<path d="M33 ${t + 10}L28 ${t - 7}L43 ${t + 4}Z M67 ${t + 10}L72 ${t - 7}L57 ${t + 4}Z" fill="${accent}" stroke="${accent}" stroke-width="3" stroke-linejoin="round"/>`,
+    `<path d="M50 ${t + 3}V${t - 8}" ${st(3, dark)}/><path d="M50 ${t - 8}q-10 -9 -15 -1q7 7 15 1Z M50 ${t - 8}q10 -9 15 -1q-7 7 -15 1Z" fill="${accent}"/>`,
+    `<path d="M42 ${t + 5}Q38 ${t - 4} 33 ${t - 7}M58 ${t + 5}Q62 ${t - 4} 67 ${t - 7}" ${st(3, dark)}/><circle cx="32" cy="${t - 8}" r="3.8" fill="${accent}"/><circle cx="68" cy="${t - 8}" r="3.8" fill="${accent}"/>`,
+    `<path d="M42 ${t + 4}L45 ${t - 8}L50 ${t + 1}L55 ${t - 8}L58 ${t + 4}Z" fill="${body}" stroke="${body}" stroke-width="2.5" stroke-linejoin="round"/>`
+  ]);
+  const gx = R.range(-2.5, 2.5), gy = R.range(-2, 2);
+  const eyeKind = R.int(6);
+  const eyes = [
+    `<circle cx="40" cy="58" r="4.5" fill="${dark}"/><circle cx="60" cy="58" r="4.5" fill="${dark}"/>`,
+    `<circle cx="40" cy="57" r="8.5" fill="#fff"/><circle cx="60" cy="57" r="8.5" fill="#fff"/><circle cx="${f1(40 + gx)}" cy="${f1(57 + gy)}" r="4" fill="${dark}"/><circle cx="${f1(60 + gx)}" cy="${f1(57 + gy)}" r="4" fill="${dark}"/>`,
+    `<circle cx="50" cy="56" r="12" fill="#fff"/><circle cx="${f1(50 + gx)}" cy="${f1(56 + gy)}" r="5.5" fill="${dark}"/><circle cx="${f1(52 + gx)}" cy="${f1(54 + gy)}" r="1.8" fill="#fff"/>`,
+    `<circle cx="36" cy="59" r="4" fill="${dark}"/><circle cx="50" cy="54" r="4" fill="${dark}"/><circle cx="64" cy="59" r="4" fill="${dark}"/>`,
+    `<path d="M35 60Q40 53 45 60M55 60Q60 53 65 60" ${st(3.5, dark)}/>`,
+    `<circle cx="35" cy="58" r="3.2" fill="${dark}"/><circle cx="65" cy="58" r="3.2" fill="${dark}"/>`
+  ][eyeKind];
+  const mouthRaw = R.pick([
+    `<path d="M44 68Q50 74 56 68" ${st(3, dark)}/>`,
+    `<path d="M43 68H57A7 7 0 0 1 43 68Z" fill="${dark}"/>`,
+    `<circle cx="50" cy="70" r="2.3" fill="${dark}"/>`,
+    `<path d="M42 68H58" ${st(3, dark)}/><path d="M46 68L48.5 73.5L51 68Z" fill="#fff"/>`,
+    `<path d="M43 68Q46.5 73 50 68Q53.5 73 57 68" ${st(3, dark)}/>`
+  ]);
+  const mouth = `<g transform="translate(0 ${eyeKind === 2 ? 7 : 0})">${mouthRaw}</g>`;
+  const clip = uid();
+  const mark = R.pick([
+    '',
+    `<circle cx="30" cy="67" r="4.2" fill="${accent}" opacity=".65"/><circle cx="70" cy="67" r="4.2" fill="${accent}" opacity=".65"/>`,
+    `<ellipse cx="50" cy="94" rx="17" ry="13" fill="${belly}"/>`,
+    `<circle cx="29" cy="50" r="3.5" fill="${dark}" opacity=".28"/><circle cx="72" cy="47" r="2.6" fill="${dark}" opacity=".28"/><circle cx="68" cy="85" r="4.5" fill="${dark}" opacity=".28"/><circle cx="33" cy="88" r="3" fill="${dark}" opacity=".28"/>`
+  ]);
+  return frame(bg,
+    topper + `<path d="${path}" fill="${body}"/><g clip-path="url(#${clip})">${mark}</g>` + eyes + mouth,
+    `<clipPath id="${clip}"><path d="${path}"/></clipPath>`);
+}
+
+/* ---------- 3. Sigil: mirrored line glyphs ---------- */
+function sigil(name) {
+  const R = seedRand('sigil:' + name);
+  const h = R.int(360), h2 = h + R.pick([40, 60, -50, 150, 180]);
+  const dir = R.pick([[0, 0, 1, 1], [1, 0, 0, 1], [0, 0, 0, 1], [0, 0, 1, 0]]);
+  const ink = hsl(h, 60, 96);
+  const P = i => 26 + i * 12;
+  let segs = [], seen = new Set(), end = [2, 2];
+  for (let attempt = 0; attempt < 30; attempt++) {
+    segs = []; seen = new Set();
+    const used = new Set();
+    let x = 2, y = R.int(5), off = 0;
+    const steps = 6 + R.int(3);
+    seen.add(x + ',' + y);
+    for (let s = 0, guard = 0; s < steps && guard < 80; guard++) {
+      const dx = R.int(3) - 1, dy = R.int(3) - 1, nx = x + dx, ny = y + dy;
+      if ((!dx && !dy) || nx < 0 || nx > 2 || ny < 0 || ny > 4) continue;
+      const key = [x, y, nx, ny].join(), rkey = [nx, ny, x, y].join();
+      if (used.has(key) || used.has(rkey)) continue;
+      used.add(key); segs.push([x, y, nx, ny]);
+      if (x < 2 || nx < 2) off++;
+      x = nx; y = ny; seen.add(x + ',' + y); s++;
+    }
+    end = [x, y];
+    if (off >= 3) break;
+  }
+  const d = segs.map(s => `M${P(s[0])} ${P(s[1])}L${P(s[2])} ${P(s[3])}`).join('');
+  let half = `<path d="${d}" fill="none" stroke="${ink}" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>`;
+  half += `<circle cx="${P(end[0])}" cy="${P(end[1])}" r="5.6" fill="${ink}"/>`;
+  const free = [];
+  for (let i = 0; i < 2; i++) for (let j = 0; j < 5; j++) if (!seen.has(i + ',' + j)) free.push([i, j]);
+  if (free.length) { const p = R.pick(free); half += `<circle cx="${P(p[0])}" cy="${P(p[1])}" r="3.2" fill="${ink}"/>`; }
+  const border = R.pick([
+    '',
+    `<circle cx="50" cy="50" r="42" fill="none" stroke="${ink}" stroke-width="2.5" opacity=".32"/>`,
+    `<circle cx="50" cy="10" r="2.6" fill="${ink}" opacity=".6"/><circle cx="50" cy="90" r="2.6" fill="${ink}" opacity=".6"/>`
+  ]);
+  const g = uid();
+  return frame(`url(#${g})`, border + half + mirrorX(half),
+    `<linearGradient id="${g}" x1="${dir[0]}" y1="${dir[1]}" x2="${dir[2]}" y2="${dir[3]}"><stop offset="0" stop-color="${hsl(h, 72, 48)}"/><stop offset="1" stop-color="${hsl(h2, 75, 30)}"/></linearGradient>`);
+}
+
+/* ---------- 4. Quilt: mirrored geometric tiles ---------- */
+function quilt(name) {
+  const R = seedRand('quilt:' + name);
+  const h = R.int(360);
+  const scheme = R.pick([[0, 35, 180], [0, 150, 210], [0, -30, 60], [0, 120, 240]]);
+  const dark = R.chance(0.5);
+  const bg = dark ? hsl(h, 35, 16) : hsl(h, 45, 93);
+  const cols = [hsl(h + scheme[0], 70, 55), hsl(h + scheme[1], 75, 62), hsl(h + scheme[2], 65, dark ? 86 : 26)];
+  const fourWay = R.chance(0.5);
+  const kinds = ['quarter', 'quarter', 'quarter', 'tri', 'tri', 'half', 'dot', 'ring', 'square', 'empty'];
+  const tile = (x, y) => {
+    const c = R.pick(cols), rot = R.int(4) * 90, k = R.pick(kinds);
+    const shape = {
+      quarter: `<path d="M-12.6 -12.6H12.6A25.2 25.2 0 0 1 -12.6 12.6Z" fill="${c}"/>`,
+      tri: `<path d="M-12.6 -12.6H12.6L-12.6 12.6Z" fill="${c}"/>`,
+      half: `<path d="M-12.6 -12.6A12.6 12.6 0 0 0 12.6 -12.6Z" fill="${c}"/>`,
+      dot: `<circle r="7.5" fill="${c}"/>`,
+      ring: `<circle r="7.5" fill="none" stroke="${c}" stroke-width="4.5"/>`,
+      square: `<rect x="-12.6" y="-12.6" width="25.2" height="25.2" fill="${c}"/>`,
+      empty: ''
+    }[k];
+    return shape ? `<g transform="translate(${x + 12.5} ${y + 12.5}) rotate(${rot})">${shape}</g>` : '';
+  };
+  let half = '';
+  if (fourWay) {
+    let q = '';
+    for (let r = 0; r < 2; r++) for (let c = 0; c < 2; c++) q += tile(c * 25, r * 25);
+    half = q + `<g transform="translate(0 100) scale(1 -1)">${q}</g>`;
+  } else {
+    for (let r = 0; r < 4; r++) for (let c = 0; c < 2; c++) half += tile(c * 25, r * 25);
+  }
+  return frame(bg, half + mirrorX(half));
+}
+
+/* ---------- 5. Orbit: little planets ---------- */
+function orbit(name) {
+  const R = seedRand('orbit:' + name);
+  const h = R.int(360), sky = h + R.pick([180, 150, 210, 90]);
+  const bg = hsl(sky, 50, 15);
+  let stars = '';
+  for (let i = 0, n = 5 + R.int(4); i < n; i++)
+    stars += `<circle cx="${f1(R.range(6, 94))}" cy="${f1(R.range(6, 94))}" r="${f1(R.range(0.8, 1.7))}" fill="#fff" opacity="${f1(R.range(0.45, 0.9))}"/>`;
+  const ringKind = R.pick([0, 0, 1, 1, 2]);
+  const pr = ringKind ? R.range(19, 23) : R.range(23, 29);
+  const clip = uid(), grad = uid();
+  const surfaceKind = R.int(5);
+  let surface = '';
+  if (surfaceKind === 0) {
+    const tilt = f1(R.range(-25, 25));
+    let bands = '';
+    for (let i = 0, y = 50 - pr + R.range(4, 9); i < 4 && y < 50 + pr; i++) {
+      const bh = R.range(3, 7.5);
+      bands += `<rect x="0" y="${f1(y)}" width="100" height="${f1(bh)}" fill="${hsl(h + 30, 60, 32)}" opacity=".5"/>`;
+      y += bh + R.range(4, 10);
+    }
+    surface = `<g transform="rotate(${tilt} 50 50)">${bands}</g>`;
+  } else if (surfaceKind === 1) {
+    for (let i = 0, n = 3 + R.int(3); i < n; i++) {
+      const a = R.range(0, 6.283), dist = R.range(0, pr * 0.75);
+      surface += `<circle cx="${f1(50 + Math.cos(a) * dist)}" cy="${f1(50 + Math.sin(a) * dist)}" r="${f1(R.range(2.5, 6))}" fill="${hsl(h, 50, 30)}" opacity=".45"/>`;
+    }
+  } else if (surfaceKind === 2) {
+    const land = hsl(h + R.pick([90, 120, -90]), 60, 52);
+    for (let i = 0, n = 2 + R.int(2); i < n; i++) {
+      const a = R.range(0, 6.283), dist = R.range(pr * 0.2, pr * 0.8);
+      const ex = f1(50 + Math.cos(a) * dist), ey = f1(50 + Math.sin(a) * dist);
+      surface += `<ellipse cx="${ex}" cy="${ey}" rx="${f1(R.range(7, 13))}" ry="${f1(R.range(4, 8))}" transform="rotate(${f1(R.range(0, 180))} ${ex} ${ey})" fill="${land}" opacity=".85"/>`;
+    }
+  } else if (surfaceKind === 3) {
+    const y = f1(50 + R.range(-6, 6));
+    surface = `<rect x="0" y="${y - 3}" width="100" height="6" fill="${hsl(h + 30, 60, 32)}" opacity=".45"/><ellipse cx="${f1(50 + R.range(-8, 8))}" cy="${y}" rx="8" ry="5" fill="${hsl(h - 40, 80, 62)}"/>`;
+  } else {
+    surface = `<ellipse cx="50" cy="${f1(50 - pr)}" rx="${f1(pr * 0.8)}" ry="${f1(pr * 0.34)}" fill="#fff" opacity=".85"/><ellipse cx="50" cy="${f1(50 + pr)}" rx="${f1(pr * 0.7)}" ry="${f1(pr * 0.26)}" fill="#fff" opacity=".85"/>`;
+  }
+  const shadow = `<circle cx="44" cy="45" r="${f1(pr + 6)}" fill="none" stroke="${hsl(sky, 60, 8)}" stroke-width="12" opacity=".34"/>`;
+  const planet = `<circle cx="50" cy="50" r="${f1(pr)}" fill="url(#${grad})"/><g clip-path="url(#${clip})">${surface}${shadow}</g>`;
+  let back = '', front = '';
+  if (ringKind) {
+    const tilt = f1(R.range(-32, 32)), rc = hsl(h + R.pick([40, 180, -40]), 75, 76);
+    const rx = f1(pr * 1.8), ry = f1(pr * 0.44);
+    const arc = (sweep, sx, sy, w, o) => `<path d="M${f1(-sx)} 0A${sx} ${sy} 0 0 ${sweep} ${sx} 0" fill="none" stroke="${rc}" stroke-width="${w}" stroke-linecap="round" opacity="${o}"/>`;
+    let b = arc(1, rx, ry, 4, 1), fr = arc(0, rx, ry, 4, 1);
+    if (ringKind === 2) {
+      const rx2 = f1(pr * 1.45), ry2 = f1(pr * 0.3);
+      b += arc(1, rx2, ry2, 2, 0.6); fr += arc(0, rx2, ry2, 2, 0.6);
+    }
+    back = `<g transform="translate(50 50) rotate(${tilt})">${b}</g>`;
+    front = `<g transform="translate(50 50) rotate(${tilt})">${fr}</g>`;
+  }
+  let moons = '';
+  for (let i = 0, n = R.pick([0, 1, 1, 2]); i < n; i++) {
+    const a = R.range(0, 6.283), dist = pr + R.range(12, 16);
+    moons += `<circle cx="${f1(50 + Math.cos(a) * dist)}" cy="${f1(50 + Math.sin(a) * dist)}" r="${f1(R.range(3, 5))}" fill="${hsl(sky + 180, 35, 82)}"/>`;
+  }
+  return frame(bg, stars + back + planet + front + moons,
+    `<clipPath id="${clip}"><circle cx="50" cy="50" r="${f1(pr)}"/></clipPath><radialGradient id="${grad}" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="${hsl(h, 82, 72)}"/><stop offset="1" stop-color="${hsl(h + 25, 70, 42)}"/></radialGradient>`);
+}
+
+/* ---------- page ---------- */
+const THEMES = [
+  { name: 'Mecha', fn: mecha,
+    blurb: 'Robot faces assembled from separate parts. The most literal fit for bots, and each one reads as a character.',
+    parts: '<b>6</b> antennas · <b>3</b> ears · <b>6</b> heads · <b>7</b> eyes · <b>6</b> mouths · <b>3</b> details · light or dark shell · any hue' },
+  { name: 'Critter', fn: critter,
+    blurb: 'Soft creatures peeking up from the bottom edge. The body outline itself is generated, so no two silhouettes match.',
+    parts: 'generated body · <b>6</b> toppers · <b>6</b> eyes · <b>5</b> mouths · <b>4</b> markings · any hue' },
+  { name: 'Sigil', fn: sigil,
+    blurb: 'The closest relative of the GitHub identicon. A line walks a 5×5 grid and is mirrored, giving a crisp rune on a gradient.',
+    parts: 'walked path of <b>6–8</b> strokes · end node · stray dot · <b>3</b> borders · <b>5</b> gradient pairings · any hue' },
+  { name: 'Quilt', fn: quilt,
+    blurb: 'Bold geometric tiles in three colours, mirrored two or four ways. Abstract, and very distinct from one bot to the next.',
+    parts: '<b>7</b> tile shapes × <b>4</b> rotations × <b>3</b> colours per cell · <b>4</b> colour schemes · light or dark ground · any hue' },
+  { name: 'Orbit', fn: orbit,
+    blurb: 'Each bot gets its own small planet, with a surface, optional rings and moons, set against a starfield.',
+    parts: '<b>5</b> surfaces · <b>3</b> ring options · <b>0–2</b> moons · generated stars · any hue' }
+];
+const BOTS = ['Claudette', 'Imagine', 'Infrado', 'Personelly'];
+const CROWD = ['Atlas', 'Biscuit', 'Cobalt', 'Dexter', 'Echo', 'Fennel', 'Gizmo', 'Halcyon', 'Indigo', 'Juniper', 'Kestrel', 'Lumen', 'Mango', 'Nimbus', 'Otto', 'Pixel', 'Quill', 'Rune', 'Sable', 'Tango'];
+const key = n => n.trim().toLowerCase() || 'bot';
+const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+function render(custom) {
+  const label = custom.trim() || 'bot';
+  document.getElementById('sheets').innerHTML = THEMES.map(t => {
+    const av = n => `<div class="av" title="${esc(n)}">${t.fn(key(n))}</div>`;
+    const heroes = BOTS.map(n => `<div class="hero">${av(n)}<span>${n}</span></div>`).join('') +
+      `<div class="hero custom">${av(label)}<span>${esc(label)}</span></div>`;
+    const rows = BOTS.map(n => `<div class="row">${av(n)}<span>${n}</span></div>`).join('');
+    return `<section class="sheet">
+      <div class="top">
+        <div class="notes"><h2>${t.name}</h2><p>${t.blurb}</p><p class="parts">${t.parts}</p></div>
+        <div class="heroes">${heroes}</div>
+      </div>
+      <div class="proof">
+        <div><p class="cap">Sidebar, dark</p><div class="side dark">${rows}</div></div>
+        <div><p class="cap">Sidebar, light</p><div class="side light">${rows}</div></div>
+        <div class="crowdbox"><p class="cap">Twenty other names</p><div class="crowd">${CROWD.map(av).join('')}</div></div>
+      </div>
+    </section>`;
+  }).join('');
+}
+if (typeof document !== 'undefined') {
+  const input = document.getElementById('name-input');
+  input.addEventListener('input', () => render(input.value));
+  render(input.value);
+}
+</script>

@@ -1,0 +1,9 @@
+node_modules/
+dist/
+coverage/
+*.tgz
+.readme-check/
+apps/playground/test-results/
+apps/playground/playwright-report/
+.DS_Store
+.react-*/

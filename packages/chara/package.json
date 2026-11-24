@@ -1,0 +1,72 @@
+{
+  "name": "@markwylde/chara",
+  "version": "0.1.0",
+  "description": "Deterministic, unique SVG avatars generated from a name.",
+  "license": "MIT",
+  "author": "Mark Wylde",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/markwylde/chara.git",
+    "directory": "packages/chara"
+  },
+  "homepage": "https://markwylde.github.io/chara/",
+  "keywords": [
+    "avatar",
+    "identicon",
+    "svg",
+    "generative",
+    "deterministic"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./core": {
+      "import": {
+        "types": "./dist/core.d.ts",
+        "default": "./dist/core.js"
+      },
+      "require": {
+        "types": "./dist/core.d.cts",
+        "default": "./dist/core.cjs"
+      }
+    },
+    "./themes/*": {
+      "import": {
+        "types": "./dist/themes/*.d.ts",
+        "default": "./dist/themes/*.js"
+      },
+      "require": {
+        "types": "./dist/themes/*.d.cts",
+        "default": "./dist/themes/*.cjs"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  }
+}
