@@ -3,7 +3,7 @@
 ## ADDED Requirements
 
 ### Requirement: Variant, animation and colour controls
-The playground SHALL let visitors switch every preview between the tile and standalone variants, turn animation on and choose a state for standalone previews, and turn colour off. State and animation controls SHALL be unavailable while the tile variant is selected.
+The playground SHALL let visitors switch every avatar between the tile and standalone variants, turn animation on and choose a state for the standalone previews in the theme sheets, and turn colour off. State and animation controls SHALL be unavailable while the tile variant is selected, and their earlier values SHALL NOT apply to tiles. The sample gallery follows the variant and colour settings but is never animated.
 
 #### Scenario: Switching to standalone
 - **WHEN** the visitor selects "Standalone"
@@ -11,11 +11,15 @@ The playground SHALL let visitors switch every preview between the tile and stan
 
 #### Scenario: Choosing a state
 - **WHEN** the visitor selects "Standalone", turns on animation and selects "Sleeping"
-- **THEN** every preview avatar has the sleeping state
+- **THEN** every preview avatar in the theme sheets has the sleeping state, and the gallery avatars have no state
 
 #### Scenario: Controls disabled for tiles
 - **WHEN** the tile variant is selected
 - **THEN** the animation and state controls are disabled
+
+#### Scenario: Back to tiles after animating
+- **WHEN** the visitor selects "Standalone", turns on animation, selects "Tile" again and then selects "Copy SVG" and "Copy React"
+- **THEN** the previews show tiles with no error, and the copied output has no animation or state
 
 #### Scenario: No colour
 - **WHEN** the visitor turns on "No colour"
