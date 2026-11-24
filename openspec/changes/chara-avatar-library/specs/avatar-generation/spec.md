@@ -122,6 +122,18 @@ Every avatar, from a built-in or a custom theme, SHALL contain only elements and
 - **WHEN** a custom theme sets `fill="url(https://example.com/x)"` or an `onload` attribute
 - **THEN** generation throws an error naming the disallowed attribute or value
 
+#### Scenario: Obfuscated URL
+- **WHEN** a custom theme sets a paint value that spells `url(` with CSS escapes or comments, such as `u\72l(https://example.com/x)`
+- **THEN** generation throws a safety error
+
+#### Scenario: Hard-coded id
+- **WHEN** a custom theme defines an element with an id that was not created through the theme context's id helper
+- **THEN** generation throws a safety error, even if the references to that id resolve inside the avatar
+
+#### Scenario: Namespace override
+- **WHEN** a custom theme sets `xmlns` on any element
+- **THEN** generation throws a safety error
+
 ### Requirement: Data URI output
 The library SHALL provide the same avatar as a `data:image/svg+xml` URI that works as an image `src` and as a CSS background.
 

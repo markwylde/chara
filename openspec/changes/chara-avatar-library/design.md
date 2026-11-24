@@ -95,12 +95,14 @@ svg (xmlns, viewBox, width/height?, role/aria-hidden)
 After `draw()` the core walks the tree and checks every node against an exported allowlist:
 - **Tags:** `svg g defs clipPath linearGradient radialGradient stop rect circle ellipse path line polyline polygon title`.
 - **Attributes:** geometry, paint, stroke, opacity, transform, gradient and `id`/`clip-path`. No `on*`, `style`, `href`, `xlink:href` or `foreignObject`.
-- **URL values:** any attribute value containing `url(` must be exactly `url(#<id>)`, where `<id>` is defined in this document.
+- **URL values:** after removing XML-invalid characters, CSS comments and CSS escapes, any attribute value containing `url(` must be exactly `url(#<id>)` in its original spelling, where `<id>` is defined in this document. This stops obfuscated forms such as `u\72l(...)`.
+- **IDs:** every defined ID must start with the avatar's own generated namespace, so a theme must create IDs with `ctx.id(local)` and can't hard-code one that would clash between inlined avatars.
+- **`xmlns`:** allowed only on the root, and only with the SVG namespace.
 - **Text:** only allowed inside `title`.
 
 A violation throws a `CharaSafetyError` that names the offending tag, attribute or value. This runs for built-in themes too (it costs very little), so the guarantee holds for every output. The same allowlist drives React's attribute-name mapping, so the two can't drift apart.
 
-The alternative was to declare custom themes trusted and outside the guarantee. That was rejected: Terminay may load avatars in privileged contexts, and a hard guarantee is simpler to reason about.
+The alternative was to declare custom themes trusted and outside the guarantee. That was rejected: Terminay may load avatars in privileged contexts, and a hard guarantee is simpler to reason about. The guarantee covers the SVG a theme produces. A theme's `draw` function is still JavaScript that the host chose to run, so custom theme code must itself be trusted.
 
 ### Seeding and hashing: cyrb128 → sfc32, as in the proof of concept
 The seed string is `` `${theme.id}:${seedName}` ``. Both functions are integer-only (`Math.imul`, shifts), so they are bit-identical across engines. The only floats are the conversion to `[0,1)` and the geometry and colour derived from it. All coordinates go through `f1`, and colours through integer RGB rounding, so engine float differences can't reach the output. A Chromium-vs-Node golden test guards this. A stronger hash (WebCrypto SHA-256) was rejected because it is asynchronous in browsers.
@@ -122,7 +124,11 @@ Sigil keeps the proof of concept's 30-attempt retry. If all attempts fail the of
 NFC, then trim, then collapse `\s+` to one space, then `toLowerCase()`. `toLowerCase` is used rather than `toLocaleLowerCase` so the output never depends on the host locale. If the result is empty, the seed is `"chara"`. With `normalize: false` the raw string is used, and an empty raw string still falls back to `"chara"`.
 
 ### Distinctness testing
-The 10k collision test generates names, deduplicates them by normalised form, renders each theme, and canonicalises each SVG by replacing every ID and `url(#…)` reference with its first-seen ordinal. It then asserts that all the canonical strings are unique.
+The collision tests generate names, deduplicate them by normalised form, render each theme, and canonicalise each SVG by replacing every ID and `url(#…)` reference with its first-seen ordinal. They assert:
+- zero duplicates across 1,000 names
+- fewer than 10 duplicates per theme across 10,000 names
+
+Mecha is built only from discrete parts, so it can repeat a face at scale: 1 repeat in 10,000 names and 25 in 50,000 were measured. Critter and Sigil had none at 50,000.
 
 ### React: render the node tree
 `Avatar` memoises `createAvatarTree` on `(name, theme, size, radius, title, idPrefix, normalize)` and maps nodes to `React.createElement`, using the allowlist's attribute table (`stroke-width` → `strokeWidth`, `clip-path` → `clipPath`, and so on). Root props are merged in the order generated attributes, then caller props, then reserved props: `viewBox` and `xmlns` are reasserted, and `children` and `dangerouslySetInnerHTML` are dropped. The component uses `forwardRef` so it works on React 18 and 19. Equality with core output is tested by parsing both into DOM trees and comparing elements, attributes and text. React and the serialiser can legitimately differ in self-closing syntax. `useAvatarDataUri` wraps `createAvatarDataUri` in `useMemo`.
