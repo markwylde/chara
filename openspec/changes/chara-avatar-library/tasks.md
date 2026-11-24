@@ -29,12 +29,12 @@
 
 ## 4. React package (`@markwylde/chara-react`)
 
-- [ ] 4.1 Implement the node-to-element renderer using the allowlist's attribute table, with a test that every allowlisted attribute is mapped
-- [ ] 4.2 Implement `Avatar` (memoised, `forwardRef`, the prop merge order generated < caller < reserved). Test that the parsed `renderToStaticMarkup` output equals the parsed core SVG for each theme, plus tests for overrides (width, ARIA, className) and ignored reserved props
-- [ ] 4.3 Implement `useAvatarDataUri` and verify it equals `createAvatarDataUri`
-- [ ] 4.4 Add a hydration test (server render, then `hydrateRoot` with duplicate avatars, with no console errors) and an unrelated-re-render test that asserts no regeneration
-- [ ] 4.5 Run the React tests against React 18 and 19 and verify both pass locally
-- [ ] 4.6 Write `packages/chara-react/README.md` with usage examples and verify they compile in the docs test
+- [x] 4.1 Implement the node-to-element renderer using the allowlist's attribute table, with a test that every allowlisted attribute is mapped
+- [x] 4.2 Implement `Avatar` (memoised, `forwardRef`, the prop merge order generated < caller < reserved). Test that the parsed `renderToStaticMarkup` output equals the parsed core SVG for each theme, plus tests for overrides (width, ARIA, className) and ignored reserved props
+- [x] 4.3 Implement `useAvatarDataUri` and verify it equals `createAvatarDataUri`
+- [x] 4.4 Add a hydration test (server render, then `hydrateRoot` with duplicate avatars, with no console errors) and an unrelated-re-render test that asserts no regeneration
+- [x] 4.5 Run the React tests against React 18 and 19 and verify both pass locally
+- [x] 4.6 Write `packages/chara-react/README.md` with usage examples and verify they compile in the docs test
 
 ## 5. Playground (`apps/playground`)
 

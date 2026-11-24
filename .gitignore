@@ -6,3 +6,4 @@ coverage/
 apps/playground/test-results/
 apps/playground/playwright-report/
 .DS_Store
+.react-*/
