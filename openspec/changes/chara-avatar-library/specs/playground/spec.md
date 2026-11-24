@@ -34,6 +34,14 @@ The playground SHALL let visitors copy the current avatar as an SVG and as a usa
 - **WHEN** the visitor selects "Copy SVG" for a theme
 - **THEN** that avatar's SVG string is on the clipboard, and the page says it was copied
 
+#### Scenario: React snippet reflects current options safely
+- **WHEN** the visitor types the name `Ma"p{le}` with radius 50 and selects "Copy React"
+- **THEN** the copied snippet is valid JSX that renders that exact name with the current theme, size and radius
+
+#### Scenario: Clipboard refused
+- **WHEN** the browser refuses clipboard access
+- **THEN** the page shows the text selected in a field for manual copying, and says that copying failed
+
 ### Requirement: Static deployment
 The playground SHALL build to static files that work from the GitHub Pages project path `/chara/`.
 
