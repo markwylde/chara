@@ -38,10 +38,10 @@
 
 ## 5. Playground (`apps/playground`)
 
-- [ ] 5.1 Scaffold a Vite + React app with `base: '/chara/'` and workspace source aliases; verify that `npm run dev -w playground` serves it
-- [ ] 5.2 Build the name input with live Mecha, Critter and Sigil previews on light and dark surfaces, plus size and radius controls; verify by typing and dragging in the browser
-- [ ] 5.3 Build the theme-switchable sample gallery, Copy SVG and Copy React (using a `JSON.stringify` name) with confirmation, and the fallback when the clipboard is refused. Verify with a unit test of the snippet builder for quotes, braces and newlines
-- [ ] 5.4 Add Playwright tests for:
+- [x] 5.1 Scaffold a Vite + React app with `base: '/chara/'` and workspace source aliases; verify that `npm run dev -w playground` serves it
+- [x] 5.2 Build the name input with live Mecha, Critter and Sigil previews on light and dark surfaces, plus size and radius controls; verify by typing and dragging in the browser
+- [x] 5.3 Build the theme-switchable sample gallery, Copy SVG and Copy React (using a `JSON.stringify` name) with confirmation, and the fallback when the clipboard is refused. Verify with a unit test of the snippet builder for quotes, braces and newlines
+- [x] 5.4 Add Playwright tests for:
   - golden names in Chromium matching the Node snapshots
   - the built site working when served from `/chara/`
   - Copy SVG contents
