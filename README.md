@@ -32,7 +32,14 @@ const svg = createAvatar('Claudette', { theme: 'critter', size: 40 });
 import { Avatar } from '@markwylde/chara-react';
 
 <Avatar name="Claudette" theme="sigil" size={20} />;
+
+// The whole character, no background, animated
+<Avatar name="Claudette" theme="critter" variant="standalone" size={240} animated state="thinking" />;
 ```
+
+![Claudette in the Mecha, Critter and Sigil themes, in each of the six states and without colour](docs/characters/states.png)
+
+Avatars come as small tiles or as standalone characters with a transparent background. Standalone characters can be animated (`idle`, `thinking`, `working`, `success`, `error`, `sleeping`) and any avatar can be drawn without colour.
 
 Every avatar is checked against an SVG allowlist, so even a custom theme can't produce scripts or external references. Output only changes in a semver-breaking release. See each package's README for the full API.
 

@@ -4,6 +4,8 @@ import { type SvgChild, type SvgNode, stripInvalidXml } from './svg.js';
 export const ALLOWED_TAGS: ReadonlySet<string> = new Set([
   'svg',
   'title',
+  // Only as a direct child of the root, where only the frame can put it.
+  'style',
   'defs',
   'g',
   'clipPath',
@@ -29,6 +31,12 @@ export const ALLOWED_ATTRIBUTES: Readonly<Record<string, string>> = Object.freez
   viewBox: 'viewBox',
   role: 'role',
   'aria-hidden': 'aria-hidden',
+  overflow: 'overflow',
+  'data-state': 'data-state',
+  'data-mono': 'data-mono',
+  // hooks for animation
+  class: 'className',
+  display: 'display',
   // identity
   id: 'id',
   // geometry
@@ -77,6 +85,13 @@ export const ALLOWED_ATTRIBUTES: Readonly<Record<string, string>> = Object.freez
 });
 
 const ID_RE = /^[A-Za-z_][A-Za-z0-9_-]*$/;
+const CLASS_RE = /^[A-Za-z0-9_-]+(?: [A-Za-z0-9_-]+)*$/;
+const THEME_CLASS_RE = /(?:^| )chara-([a-z][a-z0-9-]*)(?: |$)/;
+const ROOT_ONLY: Readonly<Record<string, RegExp>> = {
+  overflow: /^visible$/,
+  'data-state': /^[a-z]+$/,
+  'data-mono': /^$/,
+};
 const LOCAL_URL_RE = /^url\(#([A-Za-z_][A-Za-z0-9_-]*)\)$/;
 
 // Inspect the value after XML cleanup and CSS token escapes, as a consumer
@@ -100,6 +115,87 @@ export class CharaSafetyError extends Error {
   }
 }
 
+// Quotes are forbidden outright: a string could hide braces, commas or
+// parentheses from the structural checks below.
+const CSS_FORBIDDEN = ['\\', '<', '>', '&', '"', "'", '/*', 'url(', 'image(', 'image-set(', 'expression('];
+
+function splitSelectors(list: string): string[] {
+  const out: string[] = [];
+  let depth = 0;
+  let start = 0;
+  for (let i = 0; i < list.length; i++) {
+    const ch = list[i];
+    if (ch === '(' || ch === '[') depth++;
+    else if (ch === ')' || ch === ']') depth--;
+    else if (ch === ',' && depth === 0) {
+      out.push(list.slice(start, i));
+      start = i + 1;
+    }
+  }
+  out.push(list.slice(start));
+  return out;
+}
+
+/**
+ * Checks animation CSS for a theme. It may not load anything external or
+ * use escapes, its only at-rules are `@keyframes` and `@media`, every
+ * selector must start with `.chara-<themeId>[data-state` and every
+ * keyframes name with `chara-<themeId>_`. Quotes are not allowed. That keeps one theme's animation
+ * from touching the host page, another theme, or a still avatar.
+ */
+export function checkAnimationCss(css: string, themeId: string): void {
+  const fail = (why: string): never => {
+    throw new CharaSafetyError(`Animation CSS for theme "${themeId}" ${why}`);
+  };
+  if (typeof css !== 'string') fail('must be a string');
+  // The serializer drops characters XML does not allow, which could join "u" and "rl(" back together.
+  if (stripInvalidXml(css) !== css) fail('contains characters that are not allowed in XML');
+  const lower = css.toLowerCase();
+  for (const bad of CSS_FORBIDDEN) if (lower.includes(bad)) fail(`must not contain "${bad}"`);
+  const scope = `.chara-${themeId}[data-state`;
+  // Theme ids cannot contain "_", so this prefix cannot belong to two themes.
+  const keyframes = new RegExp(`^chara-${themeId}_[a-z0-9-]+$`);
+
+  const walk = (src: string, inMedia: boolean): void => {
+    let i = 0;
+    while (i < src.length) {
+      const open = src.indexOf('{', i);
+      if (open < 0) {
+        if (src.slice(i).trim() !== '') fail('has text outside a rule');
+        return;
+      }
+      const prelude = src.slice(i, open).trim();
+      let depth = 1;
+      let j = open + 1;
+      for (; j < src.length && depth > 0; j++) {
+        if (src[j] === '{') depth++;
+        else if (src[j] === '}') depth--;
+      }
+      if (depth !== 0) fail('has unbalanced braces');
+      const body = src.slice(open + 1, j - 1);
+      if (prelude.startsWith('@')) {
+        const at = /^@(keyframes|media)\s+(\S[\s\S]*)$/i.exec(prelude);
+        if (!at) fail(`uses a disallowed at-rule "${prelude.split(/\s/)[0]}"`);
+        else if (at[1]?.toLowerCase() === 'keyframes') {
+          if (!keyframes.test(at[2] as string))
+            fail(`must name keyframes "chara-${themeId}_…", got "${at[2]}"`);
+          if (body.includes('@')) fail('has an at-rule inside keyframes');
+        } else if (inMedia) fail('nests @media rules');
+        else walk(body, true);
+      } else {
+        if (prelude === '' || /[}~+;]/.test(prelude)) fail(`has an invalid selector "${prelude}"`);
+        if (body.includes('{') || body.includes('@')) fail('nests rules inside a style rule');
+        for (const selector of splitSelectors(prelude)) {
+          if (!selector.trim().startsWith(scope))
+            fail(`has a selector outside ${scope}]: "${selector.trim()}"`);
+        }
+      }
+      i = j;
+    }
+  };
+  walk(css, false);
+}
+
 /**
  * Checks a whole avatar tree against the allowlist: allowed tags and
  * attributes only, `svg` only at the root, text only inside `title`, unique
@@ -112,7 +208,7 @@ export function validateTree(root: SvgNode, idNamespace?: string): void {
 
   const visit = (node: SvgChild, parent: SvgNode | null): void => {
     if (typeof node === 'string') {
-      if (parent?.tag !== 'title') {
+      if (parent?.tag !== 'title' && parent?.tag !== 'style') {
         throw new CharaSafetyError(
           `Text is only allowed inside <title>, found it inside <${parent?.tag ?? 'root'}>`,
         );
@@ -122,6 +218,15 @@ export function validateTree(root: SvgNode, idNamespace?: string): void {
     if (!ALLOWED_TAGS.has(node.tag)) throw new CharaSafetyError(`Element <${node.tag}> is not allowed`);
     if (node.tag === 'svg' && parent !== null)
       throw new CharaSafetyError('Nested <svg> elements are not allowed');
+    if (node.tag === 'style') {
+      if (parent !== root)
+        throw new CharaSafetyError('<style> is only allowed as a direct child of the root');
+      const themeId = THEME_CLASS_RE.exec(root.attrs.class ?? '')?.[1];
+      if (themeId === undefined || node.children.some((child) => typeof child !== 'string')) {
+        throw new CharaSafetyError('<style> needs a root theme class and text content only');
+      }
+      checkAnimationCss(node.children.join(''), themeId);
+    }
     for (const [name, value] of Object.entries(node.attrs)) {
       if (!Object.hasOwn(ALLOWED_ATTRIBUTES, name)) {
         throw new CharaSafetyError(`Attribute "${name}" on <${node.tag}> is not allowed`);
@@ -130,6 +235,16 @@ export function validateTree(root: SvgNode, idNamespace?: string): void {
         throw new CharaSafetyError(
           'Attribute "xmlns" is only allowed on the SVG root with the SVG namespace',
         );
+      }
+      const rootOnly = ROOT_ONLY[name];
+      if (rootOnly !== undefined && (parent !== null || !rootOnly.test(value))) {
+        throw new CharaSafetyError(`Attribute "${name}" is only allowed on the SVG root with a fixed value`);
+      }
+      if (name === 'class' && !CLASS_RE.test(value)) {
+        throw new CharaSafetyError(`Class "${value}" may only use letters, digits, "-", "_" and spaces`);
+      }
+      if (name === 'display' && value !== 'none') {
+        throw new CharaSafetyError('Attribute "display" only allows the value "none"');
       }
       if (name === 'id') {
         if (!ID_RE.test(value)) throw new CharaSafetyError(`Element id "${value}" is not a valid id`);

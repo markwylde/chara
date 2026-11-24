@@ -16,3 +16,16 @@ export function hsl(h: number, s: number, l: number): string {
   };
   return `#${channel(0)}${channel(8)}${channel(4)}`;
 }
+
+/** The grey with the same perceived lightness (Rec. 601 luma) as a `#rrggbb` colour. */
+export function toGrey(hex: string): string {
+  const n = Number.parseInt(hex.slice(1), 16);
+  const luma = 0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255);
+  const c = Math.round(luma).toString(16).padStart(2, '0');
+  return `#${c}${c}${c}`;
+}
+
+/** {@link hsl}, but returning the grey of equal lightness. Used for the `mono` option. */
+export function hslMono(h: number, s: number, l: number): string {
+  return toGrey(hsl(h, s, l));
+}

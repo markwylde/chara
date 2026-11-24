@@ -49,11 +49,47 @@ console.log(src.length);
 | `idPrefix`  | `''`      | Prefix for every id inside the SVG. It must start with a letter or underscore, then use letters, digits, `-` or `_`.                                          |
 | `normalize` | `true`    | Applies NFC, trims, collapses whitespace and lowercases the name before seeding, so `"Claudette"` and `" claudette "` match.                                  |
 
+| `variant` | `'tile'` | `'tile'` is the character inside a rounded, coloured square. `'standalone'` is the whole character with no background; `radius` is then ignored. |
+| `animated` | `false` | Animates a standalone avatar. Needs `variant: 'standalone'`, or a `TypeError` is thrown. |
+| `state` | `'idle'` | What an animated avatar is doing: `idle`, `thinking`, `working`, `success`, `error` or `sleeping`. It has no effect unless `animated` is set. |
+| `mono` | `false` | Draws the avatar in greys only. It works with both variants and every state. |
+
 An empty name (after normalisation) is seeded as `"chara"`.
+
+### Standalone, animated characters
+
+```ts
+import { createAvatar } from '@markwylde/chara';
+
+// The whole character, with a transparent background, at any size
+const hero = createAvatar('Claudette', { theme: 'critter', variant: 'standalone', size: 240 });
+
+// Animated, and showing what the bot is doing
+const busy = createAvatar('Claudette', {
+  theme: 'critter',
+  variant: 'standalone',
+  animated: true,
+  state: 'working',
+});
+
+// Offline: no colour, asleep
+const away = createAvatar('Claudette', {
+  variant: 'standalone',
+  animated: true,
+  state: 'sleeping',
+  mono: true,
+});
+```
+
+A name gives the same character in both variants: the standalone one is built from the same parts as the tile.
+
+The animation is CSS inside the SVG, so it needs no stylesheet or script from your page, and it also runs when the SVG is used as an image. It contains the rules for every state. To change state on an inline SVG, set the root's `data-state` attribute; nothing needs to be regenerated. Animated avatars stand still for people who have asked their system for reduced motion.
+
+Each name starts its loops at a slightly different point, so a row of bots doesn't blink in unison. In the `error` state the character keeps its colours and gains a pulsing red glow.
 
 ### Putting many avatars on one page
 
-Every id in an avatar comes from the theme, the name and the radius. The same avatar repeated on a page reuses the same ids, with identical content, which renders correctly and hydrates cleanly. Different avatars, including the same name at different radii, get different ids. If you need full isolation, pass an `idPrefix`.
+Every id in an avatar comes from the theme, the name, the radius, the variant and `mono`. The same avatar repeated on a page reuses the same ids, with identical content, which renders correctly and hydrates cleanly. Different avatars, including the same name at different radii, get different ids. If you need full isolation, pass an `idPrefix`.
 
 ## Smaller bundles
 
@@ -107,9 +143,36 @@ console.log(svg);
 Call `rand` in a fixed order, and don't use `Math.random`, dates or other outside state, so output stays deterministic.
 Use `ctx.id(local)` for every ID a theme defines, and `ctx.ref(id)` for references. Hard-coded IDs are rejected so custom avatars remain isolated when inlined together.
 
+### Standalone and animated custom themes
+
+A theme can also define `character`, which draws the standalone figure and returns only `content`, and `animation`, a CSS string for animated avatars.
+
+```ts
+import { createAvatar, defineTheme } from '@markwylde/chara';
+
+const orb = defineTheme({
+  id: 'orb',
+  draw: ({ rand, hsl, el }) => ({
+    background: hsl(rand.int(360), 60, 85),
+    content: [el('circle', { cx: 50, cy: 50, r: 30, fill: '#333' })],
+  }),
+  character: ({ rand, hsl, el }) => ({
+    content: [el('circle', { class: 'orb-ball', cx: 50, cy: 50, r: 30, fill: hsl(rand.int(360), 70, 55) })],
+  }),
+  animation:
+    '.chara-orb[data-state] .orb-ball{animation:chara-orb_pulse 3s ease-in-out infinite}' +
+    '.chara-orb[data-state=working] .orb-ball{animation-duration:.6s}' +
+    '@keyframes chara-orb_pulse{50%{opacity:.5}}',
+});
+
+createAvatar('Claudette', { theme: orb, variant: 'standalone', animated: true, state: 'working' });
+```
+
+Without `character`, asking for the standalone variant throws a `TypeError`; without `animation`, so does `animated`. Give parts a `class` to animate them. Every selector in the CSS must start with `.chara-<theme id>[data-state`, and every keyframes name with `chara-<theme id>_`. That scope is enforced, so one theme's animation can't affect your page, another theme, or a still avatar. `mono` turns colours from `ctx.hsl` grey; literal colours and colours in your CSS are yours to handle (the root has a `data-mono` attribute to select on).
+
 ### Safety
 
-Every avatar is checked against an allowlist before it is returned, whichever theme drew it. Only basic shapes, groups, gradients, clip paths and `title` are allowed, with presentation attributes (`ALLOWED_TAGS`, `ALLOWED_ATTRIBUTES`). URL values must use the exact `url(#id)` form and point at an ID inside the same avatar; obfuscated CSS URLs and namespace overrides are rejected. Scripts, event handlers, `style`, `href` and `foreignObject` throw a `CharaSafetyError`. This validates generated SVG content; custom theme draw functions are JavaScript and must be trusted by the host application.
+Every avatar is checked against an allowlist before it is returned, whichever theme drew it. Only basic shapes, groups, gradients, clip paths and `title` are allowed, with presentation attributes (`ALLOWED_TAGS`, `ALLOWED_ATTRIBUTES`). URL values must use the exact `url(#id)` form and point at an ID inside the same avatar; obfuscated CSS URLs and namespace overrides are rejected. Scripts, event handlers, the `style` attribute, `href` and `foreignObject` throw a `CharaSafetyError`. Themes can't add a stylesheet: the only `<style>` element is the one the library writes for an animated avatar, and its CSS is checked first (`checkAnimationCss`). That check rejects escapes, `url()` and other ways of loading something external, any at-rule except `@keyframes` and `@media`, and any selector outside the theme's own scope. This validates generated SVG content; custom theme draw functions are JavaScript and must be trusted by the host application.
 
 ## Stability
 

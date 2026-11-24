@@ -178,3 +178,122 @@ describe('useAvatarDataUri', () => {
     expect(result.current).toBe(createAvatarDataUri('Imagine', { theme: 'critter', size: 24 }));
   });
 });
+
+describe('standalone, animated and mono avatars', () => {
+  const cases = THEME_IDS.flatMap((theme) => [
+    { theme, variant: 'standalone' as const },
+    { theme, variant: 'standalone' as const, animated: true, state: 'working' as const, mono: true },
+    { theme, mono: true },
+  ]);
+
+  it.each(cases)('matches the core output for %o', (options) => {
+    const markup = renderToStaticMarkup(<Avatar name="Claudette" size={40} {...options} />);
+    expect(describeTree(markup)).toEqual(describeTree(createAvatar('Claudette', { size: 40, ...options })));
+  });
+
+  it('renders the stylesheet as a text child, not injected HTML', () => {
+    const { container } = render(<Avatar name="Claudette" variant="standalone" animated />);
+    const style = container.querySelector('svg > style')!;
+    expect(style.textContent).toContain('.chara-mecha[data-state]');
+    expect(style.childNodes).toHaveLength(1);
+    expect(style.firstChild!.nodeType).toBe(3);
+  });
+
+  it('changes state on the same element without regenerating', () => {
+    let draws = 0;
+    const theme = defineTheme({
+      id: 'counted',
+      draw: () => ({ background: '#fff', content: [] }),
+      character: ({ el }) => {
+        draws++;
+        return { content: [el('circle', { class: 'dot', r: 5 })] };
+      },
+      animation: '.chara-counted[data-state=thinking] .dot{opacity:.5}',
+    });
+    const { container, rerender } = render(<Avatar name="a" theme={theme} variant="standalone" animated />);
+    const svg = container.querySelector('svg')!;
+    const dot = container.querySelector('circle')!;
+    expect(svg.getAttribute('data-state')).toBe('idle');
+    rerender(<Avatar name="a" theme={theme} variant="standalone" animated state="thinking" />);
+    expect(container.querySelector('svg')).toBe(svg);
+    expect(container.querySelector('circle')).toBe(dot);
+    expect(svg.getAttribute('data-state')).toBe('thinking');
+    expect(draws).toBe(1);
+  });
+
+  it('validates the state on every render', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { rerender } = render(<Avatar name="a" variant="standalone" animated state="idle" />);
+    expect(() =>
+      rerender(<Avatar name="a" variant="standalone" animated state={'dancing' as never} />),
+    ).toThrow(TypeError);
+    expect(() => render(<Avatar name="a" state={'dancing' as never} />)).toThrow(TypeError);
+  });
+
+  it('has no data-state unless animated', () => {
+    const { container } = render(<Avatar name="a" variant="standalone" state="sleeping" />);
+    expect(container.querySelector('svg')!.hasAttribute('data-state')).toBe(false);
+    expect(container.querySelector('style')).toBeNull();
+  });
+
+  it('rejects an animated tile like the core does', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    expect(() => render(<Avatar name="a" animated />)).toThrow(TypeError);
+  });
+
+  it('merges className with the generated classes', () => {
+    const { container } = render(<Avatar name="a" variant="standalone" className="hero" />);
+    const classes = container.querySelector('svg')!.getAttribute('class')!.split(' ');
+    expect(classes).toEqual(expect.arrayContaining(['chara', 'chara-mecha', 'hero']));
+  });
+
+  it('reserves data-state and data-mono', () => {
+    const { container } = render(
+      <Avatar
+        name="a"
+        variant="standalone"
+        animated
+        state="idle"
+        {...({ 'data-state': 'error', 'data-mono': 'x' } as object)}
+      />,
+    );
+    const svg = container.querySelector('svg')!;
+    expect(svg.getAttribute('data-state')).toBe('idle');
+    expect(svg.hasAttribute('data-mono')).toBe(false);
+  });
+
+  it('hydrates animated avatars, including duplicates, without mismatches', () => {
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const app = (
+      <div>
+        {THEME_IDS.map((theme) => (
+          <span key={theme}>
+            <Avatar name="Claudette" theme={theme} variant="standalone" animated state="sleeping" />
+            <Avatar name="Claudette" theme={theme} variant="standalone" animated state="sleeping" />
+            <Avatar name="Imagine" theme={theme} variant="standalone" mono />
+          </span>
+        ))}
+      </div>
+    );
+    const host = document.createElement('div');
+    host.innerHTML = renderToString(app);
+    document.body.append(host);
+    act(() => {
+      hydrateRoot(host, app, { onRecoverableError: (error) => console.error(error) });
+    });
+    expect(errors).not.toHaveBeenCalled();
+    expect(host.querySelectorAll('svg[data-state="sleeping"]')).toHaveLength(6);
+  });
+
+  it('passes the new options through the data URI hook', () => {
+    const options = {
+      theme: 'critter',
+      variant: 'standalone',
+      animated: true,
+      state: 'error',
+      mono: true,
+    } as const;
+    const { result } = renderHook(() => useAvatarDataUri('Claudette', options));
+    expect(result.current).toBe(createAvatarDataUri('Claudette', options));
+  });
+});

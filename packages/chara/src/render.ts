@@ -1,10 +1,20 @@
-import { hsl } from './color.js';
+import {
+  type AvatarState,
+  type AvatarVariant,
+  DELAY_STEPS,
+  frameCss,
+  resolveState,
+  resolveVariant,
+} from './animation.js';
+import { hsl, hslMono } from './color.js';
 import { f1, mirrorX, smoothClosedPath } from './geometry.js';
 import { normalizeName } from './normalize.js';
 import { createRandom, cyrb128 } from './random.js';
 import { validateTree } from './safety.js';
 import { el, num, type SvgNode, serialize, stripInvalidXml } from './svg.js';
 import type { Theme, ThemeContext } from './theme.js';
+
+export type { AvatarState, AvatarVariant } from './animation.js';
 
 export const DEFAULT_RADIUS = 24;
 
@@ -20,6 +30,17 @@ export interface BaseAvatarOptions {
   idPrefix?: string;
   /** Normalise the name (case, spacing, Unicode form) before seeding. Default true. */
   normalize?: boolean;
+  /**
+   * "tile" (default) is the character inside a rounded, coloured square.
+   * "standalone" is the whole character with no background; `radius` is ignored.
+   */
+  variant?: AvatarVariant;
+  /** Animate a standalone avatar with CSS carried inside the SVG. Default false. */
+  animated?: boolean;
+  /** What an animated avatar is doing. Default "idle". No effect unless `animated`. */
+  state?: AvatarState;
+  /** Draw in greys only. Default false. */
+  mono?: boolean;
 }
 
 export interface CoreAvatarOptions extends BaseAvatarOptions {
@@ -53,9 +74,25 @@ export function createAvatarTree(name: string, options: CoreAvatarOptions): SvgN
       `Invalid idPrefix ${JSON.stringify(idPrefix)}: start with a letter or underscore, then use letters, digits, "-" or "_"`,
     );
   }
+  const variant = resolveVariant(options.variant);
+  const state = resolveState(options.state);
+  const animated = options.animated === true;
+  const mono = options.mono === true;
+  const standalone = variant === 'standalone';
+  if (animated && !standalone) {
+    throw new TypeError('animated avatars need variant: "standalone"');
+  }
+  if (standalone && typeof theme.character !== 'function') {
+    throw new TypeError(`Theme "${theme.id}" has no standalone character (define character() in the theme)`);
+  }
+  if (animated && typeof theme.animation !== 'string') {
+    throw new TypeError(`Theme "${theme.id}" has no animation CSS, so it cannot be animated`);
+  }
   const radius = resolveRadius(options.radius);
   const seed = normalizeName(name, normalize);
-  const idBase = `${idPrefix}c${hash64(`${theme.id}\0${seed}\0r${num(radius)}`)}`;
+  // Variant and mono only enter the hash when set, so plain tile ids never change.
+  const idKey = `${theme.id}\0${seed}\0${standalone ? 'vstandalone' : `r${num(radius)}`}${mono ? '\0m' : ''}`;
+  const idBase = `${idPrefix}c${hash64(idKey)}`;
   const defs: SvgNode[] = [];
 
   const id = (local: string): string => {
@@ -64,7 +101,7 @@ export function createAvatarTree(name: string, options: CoreAvatarOptions): SvgN
   };
   const ctx: ThemeContext = {
     rand: createRandom(`${theme.id}:${seed}`),
-    hsl,
+    hsl: mono ? hslMono : hsl,
     id,
     ref: (target) => `url(#${target})`,
     def: (node) => {
@@ -76,23 +113,51 @@ export function createAvatarTree(name: string, options: CoreAvatarOptions): SvgN
     f1,
   };
 
+  const cleanTitle = title === undefined ? '' : stripInvalidXml(String(title)).trim();
+  const rootAttrs = {
+    xmlns: 'http://www.w3.org/2000/svg',
+    viewBox: '0 0 100 100',
+    width: size === undefined ? undefined : String(size),
+    height: size === undefined ? undefined : String(size),
+    role: cleanTitle ? 'img' : undefined,
+    'aria-hidden': cleanTitle ? undefined : 'true',
+  };
+
+  if (standalone) {
+    const figure = (theme.character as NonNullable<Theme['character']>)(ctx);
+    if (!figure || !Array.isArray(figure.content)) {
+      throw new TypeError(`Theme "${theme.id}" character() must return { content: SvgNode[] }`);
+    }
+    // A separate seed, so the timing offset never disturbs the drawing's random sequence.
+    const delay = createRandom(`anim:${seed}`).int(DELAY_STEPS);
+    const root = el(
+      'svg',
+      {
+        ...rootAttrs,
+        overflow: 'visible',
+        class: `chara chara-${theme.id} chara_d${delay}`,
+        'data-state': animated ? state : undefined,
+        'data-mono': mono ? '' : undefined,
+      },
+      cleanTitle ? el('title', {}, cleanTitle) : null,
+      animated ? el('style', {}, frameCss(theme.id, theme.animation as string)) : null,
+      defs.length > 0 ? el('defs', {}, defs) : null,
+      // Theme nodes always sit below this group, never directly under the root.
+      el('g', {}, figure.content),
+    );
+    validateTree(root, `${idBase}-`);
+    return root;
+  }
+
   const drawing = theme.draw(ctx);
   if (!drawing || typeof drawing.background !== 'string' || !Array.isArray(drawing.content)) {
     throw new TypeError(`Theme "${theme.id}" must return { background: string, content: SvgNode[] }`);
   }
 
   const frameId = id('frame');
-  const cleanTitle = title === undefined ? '' : stripInvalidXml(String(title)).trim();
   const root = el(
     'svg',
-    {
-      xmlns: 'http://www.w3.org/2000/svg',
-      viewBox: '0 0 100 100',
-      width: size === undefined ? undefined : String(size),
-      height: size === undefined ? undefined : String(size),
-      role: cleanTitle ? 'img' : undefined,
-      'aria-hidden': cleanTitle ? undefined : 'true',
-    },
+    rootAttrs,
     cleanTitle ? el('title', {}, cleanTitle) : null,
     el(
       'defs',
