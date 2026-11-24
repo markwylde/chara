@@ -23,6 +23,25 @@ function describeTree(markup: string): unknown {
   return walk(doc.documentElement);
 }
 
+const counter = { draws: 0, bump: () => {} };
+const countingTheme = defineTheme({
+  id: 'counting',
+  draw: ({ el }) => {
+    counter.draws++;
+    return { background: '#123456', content: [el('circle', { cx: 50, cy: 50, r: 10, fill: '#fff' })] };
+  },
+});
+
+function CountingParent() {
+  const [count, setCount] = useState(0);
+  counter.bump = () => setCount((c) => c + 1);
+  return (
+    <div data-count={count}>
+      <Avatar name="Claudette" theme={countingTheme} size={32} />
+    </div>
+  );
+}
+
 afterEach(() => {
   document.body.innerHTML = '';
   vi.restoreAllMocks();
@@ -125,29 +144,12 @@ describe('Avatar', () => {
   });
 
   it('does not regenerate on unrelated re-renders', () => {
-    let draws = 0;
-    const counting = defineTheme({
-      id: 'counting',
-      draw: ({ el }) => {
-        draws++;
-        return { background: '#123456', content: [el('circle', { cx: 50, cy: 50, r: 10, fill: '#fff' })] };
-      },
-    });
-    let bump: () => void = () => {};
-    function Parent() {
-      const [count, setCount] = useState(0);
-      bump = () => setCount((c) => c + 1);
-      return (
-        <div data-count={count}>
-          <Avatar name="Claudette" theme={counting} size={32} />
-        </div>
-      );
-    }
-    render(<Parent />);
-    expect(draws).toBe(1);
-    act(() => bump());
-    act(() => bump());
-    expect(draws).toBe(1);
+    counter.draws = 0;
+    render(<CountingParent />);
+    expect(counter.draws).toBe(1);
+    act(() => counter.bump());
+    act(() => counter.bump());
+    expect(counter.draws).toBe(1);
   });
 
   it('works under StrictMode', () => {
