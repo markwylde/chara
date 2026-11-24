@@ -1,0 +1,235 @@
+<title>Chara Standalone POC</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{--bg:#f6f6f3;--panel:#ffffff;--fg:#17181c;--muted:#62656f;--line:#dedfd9;--accent:#3d5bd9;--accent-fg:#fff;--chip:#ecece7}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e0f13;--panel:#16181e;--fg:#eceef2;--muted:#9a9eab;--line:#282b34;--accent:#7f9bff;--accent-fg:#0e0f13;--chip:#1f222a;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0e0f13;--panel:#16181e;--fg:#eceef2;--muted:#9a9eab;--line:#282b34;--accent:#7f9bff;--accent-fg:#0e0f13;--chip:#1f222a;color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:15px/1.55 Inter,system-ui,sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding-block:36px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2{font-family:"Space Grotesk",Inter,sans-serif;text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(28px,5vw,40px);line-height:1.1}
+h2{font-size:24px}
+.lede{color:var(--muted);max-width:62ch;margin:10px 0 0}
+.label{font:500 11px/1 "JetBrains Mono",ui-monospace,monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.controls{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;display:flex;flex-wrap:wrap;gap:14px 22px;align-items:end;margin:26px 0 30px;padding:14px 16px;background:color-mix(in srgb,var(--panel) 92%,transparent);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:14px}
+.field{display:grid;gap:7px;min-width:0}
+.field input[type=text]{font:500 16px Inter,sans-serif;padding:8px 11px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--fg);width:170px;max-width:100%}
+.field input[type=range]{width:150px;accent-color:var(--accent)}
+.seg{display:flex;flex-wrap:wrap;gap:3px;padding:3px;background:var(--chip);border-radius:10px}
+.seg label{position:relative;cursor:pointer}
+.seg input{position:absolute;opacity:0;inset:0;cursor:pointer}
+.seg span{display:block;padding:6px 11px;border-radius:7px;font-weight:500;font-size:13.5px;color:var(--muted)}
+.seg input:checked+span{background:var(--accent);color:var(--accent-fg)}
+.seg input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+.motion-note{display:none;margin:-14px 0 24px;padding:10px 14px;border:1px dashed var(--line);border-radius:10px;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){.motion-note{display:block}}
+.theme{margin-top:44px}
+.theme>p{color:var(--muted);margin:6px 0 16px;max-width:68ch}
+.stage{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:12px}
+.surface{display:grid;place-items:center;gap:6px;min-height:230px;padding:26px 16px 14px;border-radius:16px;border:1px solid var(--line);overflow:hidden;min-width:0}
+.surface.light{background:#f4f4f1;color:#62656f}
+.surface.dark{background:#0d0e12;color:#9a9eab;border-color:#262932}
+.surface.check{color:#62656f;background:#fff conic-gradient(#e3e4e0 25%,transparent 0 50%,#e3e4e0 0 75%,transparent 0) 0 0/22px 22px}
+.surface .chara{max-width:100%;height:auto}
+.surface .label{color:inherit}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:12px;margin-top:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px 16px 16px;min-width:0}
+.card>.label{display:block;margin-bottom:12px}
+.states{display:grid;grid-template-columns:repeat(auto-fit,minmax(58px,1fr));gap:4px;text-align:center}
+.states svg{width:100%;height:auto;max-width:84px}
+.states small,.lineup small{display:block;margin-top:4px;font:500 11px "JetBrains Mono",monospace;color:var(--muted);overflow:hidden;text-overflow:ellipsis}
+.lineup{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:8px 4px;text-align:center}
+.lineup button{all:unset;cursor:pointer;border-radius:10px;padding:6px 2px;min-width:0}
+.lineup button:hover{background:var(--chip)}
+.lineup button:focus-visible{outline:2px solid var(--accent)}
+.lineup svg{width:64px;height:64px}
+.before{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.before .arrow{color:var(--muted);font-size:20px}
+.before svg{flex:none}
+
+/* ───── Animation: everything below is what the library would ship ───── */
+.chara{overflow:visible}
+.chara :is(.c-body,.c-top,.c-eyes,.c-look,.c-mouth,.c-arm,.c-shadow,.c-glow,.s-dots,.s-ring){transform-box:fill-box;transform-origin:center}
+.chara :is(.c-body,.c-top,.c-eyes,.c-look,.c-mouth,.c-arm,.c-shadow,.c-glow,.s-line,.s-dots,.s-ring){animation-delay:var(--d,0s)}
+.chara .c-top,.t-critter .c-body{transform-origin:50% 100%}
+.chara .c-arm.l{transform-origin:85% 15%}
+.chara .c-arm.r{transform-origin:15% 15%}
+
+/* idle */
+.c-eyes{animation:blink 4.6s infinite}
+.c-glow{animation:glow 2.6s ease-in-out infinite}
+.t-mecha .c-body{animation:float 3.8s ease-in-out infinite}
+.t-mecha .c-shadow{animation:shadow 3.8s ease-in-out infinite}
+.t-mecha .c-top{animation:sway 5.2s ease-in-out infinite}
+.t-critter .c-body{animation:breathe 3.4s ease-in-out infinite}
+.t-critter .c-top{animation:sway 4.4s ease-in-out infinite}
+.t-sigil .c-body{animation:pulse 4.2s ease-in-out infinite}
+.t-sigil .s-dots{animation:glow 2.8s ease-in-out infinite}
+
+/* thinking */
+[data-state=thinking] .c-look{animation:look 3.4s ease-in-out infinite}
+[data-state=thinking] .c-glow{animation:glow .9s ease-in-out infinite}
+[data-state=thinking].t-mecha .c-body{animation:ponder 3.4s ease-in-out infinite}
+[data-state=thinking].t-critter .c-body{animation:lean 3.4s ease-in-out infinite}
+[data-state=thinking] .s-line{stroke-dasharray:.1 8.4;animation:march .7s linear infinite}
+[data-state=thinking].t-sigil .s-dots{animation:glow .9s ease-in-out infinite}
+
+/* working */
+[data-state=working] .c-mouth{animation:talk .32s ease-in-out infinite alternate}
+[data-state=working] .c-glow{animation:glow .45s steps(2) infinite}
+[data-state=working].t-mecha .c-body{animation:float .6s ease-in-out infinite}
+[data-state=working].t-mecha .c-shadow{animation:shadow .6s ease-in-out infinite}
+[data-state=working].t-critter .c-body{animation:bounce .56s ease-in-out infinite}
+[data-state=working] .c-arm.l{animation:wave-l .28s ease-in-out infinite alternate}
+[data-state=working] .c-arm.r{animation:wave-r .28s ease-in-out infinite alternate}
+[data-state=working] .s-line{stroke-dasharray:17 17;animation:draw 1.5s ease-in-out infinite}
+[data-state=working] .s-ring{stroke-dasharray:9 7;animation:spin 6s linear infinite}
+
+/* success */
+[data-state=success] .c-body{animation:hop 1.7s cubic-bezier(.3,.6,.4,1) infinite}
+[data-state=success] .c-shadow{animation:hop-shadow 1.7s ease-in-out infinite}
+[data-state=success] .c-arm.l{animation:wave-l .28s ease-in-out infinite alternate}
+[data-state=success] .c-arm.r{animation:wave-r .28s ease-in-out infinite alternate}
+[data-state=success].t-sigil .c-body{animation:pop 1.7s ease-out infinite}
+[data-state=success] .c-glow{animation:glow .5s ease-in-out infinite}
+
+/* sleeping */
+.c-zzz{display:none}
+[data-state=sleeping] .c-zzz{display:block}
+.c-z{transform-box:fill-box;transform-origin:center;opacity:0;animation:zzz 3.3s ease-out infinite}
+.c-z.z2{animation-delay:.5s}.c-z.z3{animation-delay:1s}
+[data-state=sleeping] .c-eyes{animation:none;transform:scaleY(.1)}
+[data-state=sleeping] .c-glow{animation:glow 5s ease-in-out infinite;fill-opacity:.35}
+[data-state=sleeping].t-mecha .c-body{animation:doze 5s ease-in-out infinite}
+[data-state=sleeping].t-mecha .c-shadow{animation:none;transform:scaleX(1.06)}
+[data-state=sleeping].t-mecha .c-top{animation:droop 5s ease-in-out infinite}
+[data-state=sleeping].t-critter .c-body{animation:snooze 5s ease-in-out infinite}
+[data-state=sleeping].t-critter .c-top{animation:none;transform:rotate(-4deg)}
+[data-state=sleeping].t-sigil .c-body{animation:dim 5s ease-in-out infinite}
+[data-state=sleeping].t-sigil .s-dots{animation:none;opacity:.25}
+
+/* no colour: combines with any state */
+.chara[data-mono]{filter:grayscale(1)}
+
+/* error */
+[data-state=error] .c-body{animation:shake 1.9s ease-in-out infinite}
+[data-state=error] .c-eyes{animation:none}
+[data-state=error] .c-glow{fill:#ff5247;animation:glow .5s steps(2) infinite}
+[data-state=error].t-mecha .c-top{animation:droop 1.9s ease-in-out infinite}
+[data-state=error].t-critter .c-body{filter:saturate(.5) brightness(.92)}
+[data-state=error] :is(.s-line,.s-ring){stroke:#e5484d}
+[data-state=error] .s-dots circle,[data-state=error].t-sigil circle:not(.s-ring){fill:#e5484d}
+[data-state=error] .s-line{stroke-dasharray:9 5;animation:flicker 1.9s steps(1) infinite}
+
+@keyframes blink{0%,93%,100%{transform:scaleY(1)}96.5%{transform:scaleY(.08)}}
+@keyframes glow{0%,100%{opacity:1}50%{opacity:.45}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-2.4px)}}
+@keyframes shadow{0%,100%{transform:scaleX(1)}50%{transform:scaleX(.86)}}
+@keyframes sway{0%,100%{transform:rotate(-2.5deg)}50%{transform:rotate(2.5deg)}}
+@keyframes breathe{0%,100%{transform:scale(1,1)}50%{transform:scale(1.018,.972)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.035)}}
+@keyframes look{0%,8%{transform:translate(0,0)}18%,42%{transform:translate(-2.4px,-1.6px)}56%,84%{transform:translate(2.4px,-1.6px)}96%,100%{transform:translate(0,0)}}
+@keyframes ponder{0%,100%{transform:translateY(0) rotate(-3.5deg)}50%{transform:translateY(-1.6px) rotate(3.5deg)}}
+@keyframes lean{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+@keyframes march{to{stroke-dashoffset:-8.5}}
+@keyframes talk{from{transform:scaleY(.45)}to{transform:scaleY(1.25)}}
+@keyframes bounce{0%,100%{transform:scale(1.04,.94)}50%{transform:translateY(-3.4px) scale(.98,1.04)}}
+@keyframes wave-l{from{transform:rotate(8deg)}to{transform:rotate(58deg)}}
+@keyframes wave-r{from{transform:rotate(-8deg)}to{transform:rotate(-58deg)}}
+@keyframes draw{0%{stroke-dashoffset:17}45%,60%{stroke-dashoffset:0}100%{stroke-dashoffset:-17}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes hop{0%,62%,100%{transform:translateY(0) scale(1)}8%{transform:scale(1.06,.9)}24%{transform:translateY(-9px) scale(.96,1.05)}38%{transform:scale(1.05,.93)}48%{transform:translateY(-4px)}56%{transform:scale(1.02,.97)}}
+@keyframes hop-shadow{0%,62%,100%{transform:scaleX(1)}24%{transform:scaleX(.6)}38%{transform:scaleX(1)}48%{transform:scaleX(.8)}}
+@keyframes pop{0%,62%,100%{transform:scale(1) rotate(0)}22%{transform:scale(1.16) rotate(8deg)}40%{transform:scale(.97) rotate(-3deg)}52%{transform:scale(1.03)}}
+@keyframes shake{0%,30%,100%{transform:translateX(0) rotate(0)}5%{transform:translateX(-2.2px) rotate(-2deg)}10%{transform:translateX(2.2px) rotate(2deg)}15%{transform:translateX(-1.8px) rotate(-1.5deg)}20%{transform:translateX(1.4px) rotate(1deg)}25%{transform:translateX(-.8px)}}
+@keyframes zzz{0%{opacity:0;transform:translate(-2px,3px) scale(.6)}25%{opacity:1}70%{opacity:.9}100%{opacity:0;transform:translate(3px,-6px) scale(1.15)}}
+@keyframes doze{0%,100%{transform:translateY(3.2px) rotate(5deg)}50%{transform:translateY(2px) rotate(5deg)}}
+@keyframes snooze{0%,100%{transform:scale(1.03,.95)}50%{transform:scale(1,.99)}}
+@keyframes dim{0%,100%{opacity:.38;transform:scale(.97)}50%{opacity:.6;transform:scale(1)}}
+@keyframes droop{0%,100%{transform:rotate(14deg)}50%{transform:rotate(18deg)}}
+@keyframes flicker{0%,100%{opacity:1}8%{opacity:.35}12%{opacity:1}18%{opacity:.5}24%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.chara *{animation:none!important}}
+</style>
+
+<div class="wrap">
+  <h1>Chara, out of the box</h1>
+  <p class="lede">The same three characters with the background tile removed, drawn as whole figures, and given an idle loop, five states and a no-colour option. Type a name, switch the state, and drag the size up.</p>
+
+  <div class="controls">
+    <label class="field"><span class="label">Name</span><input id="name" type="text" value="Claudette" maxlength="40" autocomplete="off" spellcheck="false"></label>
+    <div class="field"><span class="label">State</span>
+      <div class="seg" id="state" role="radiogroup" aria-label="State"></div>
+    </div>
+    <div class="field"><span class="label">Colour</span>
+      <div class="seg"><label><input type="checkbox" id="mono"><span>No colour</span></label></div>
+    </div>
+    <label class="field"><span class="label">Size <span id="size-out">200</span>px</span><input id="size" type="range" min="48" max="360" step="4" value="200"></label>
+  </div>
+  <p class="motion-note">Your system asks for reduced motion, so the characters are standing still. Turn that setting off to see the animation.</p>
+
+  <div id="themes"></div>
+</div>
+
+<script>/*__BUNDLE__*/</script>
+<script>
+(() => {
+  const STATES = ['idle', 'thinking', 'working', 'success', 'error', 'sleeping'];
+  const THEMES = [
+    { id: 'mecha', title: 'Mecha', blurb: 'The head hovers over its shadow. The old tile colour becomes a sticker outline, so a white shell still reads on a white page. Antennas sway, lights pulse, and the mouth talks while working.' },
+    { id: 'critter', title: 'Critter', blurb: 'No longer cut off at the bottom edge: the blob is a whole body with feet and arms. It breathes, blinks, looks around when thinking, and waves its arms when busy.' },
+    { id: 'sigil', title: 'Sigil', blurb: 'The glyph itself carries the gradient, as white ink would vanish on a light page. Strokes march while thinking, redraw while working, and break up in red on error.' },
+  ];
+  const BOTS = ['Claudette', 'Imagine', 'Infrado', 'Personelly', 'Atlas', 'Biscuit', 'Gizmo', 'Juniper', 'Mango', 'Otto', 'Quill', 'Tango'];
+  const $ = (s, r = document) => r.querySelector(s);
+  const nameEl = $('#name'), sizeEl = $('#size'), sizeOut = $('#size-out'), root = $('#themes');
+  let state = 'idle', mono = false;
+  $('#mono').addEventListener('change', (e) => { mono = e.target.checked; document.querySelectorAll('.chara[data-live]').forEach((n) => n.toggleAttribute('data-mono', mono)); });
+
+  $('#state').innerHTML = STATES.map((s, i) => `<label><input type="radio" name="state" value="${s}"${i ? '' : ' checked'}><span>${s[0].toUpperCase() + s.slice(1)}</span></label>`).join('');
+  $('#state').addEventListener('change', (e) => {
+    state = e.target.value;
+    document.querySelectorAll('.chara[data-live]').forEach((n) => n.setAttribute('data-state', state));
+  });
+
+  root.innerHTML = THEMES.map((t) => `
+    <section class="theme" data-theme-id="${t.id}">
+      <h2>${t.title}</h2><p>${t.blurb}</p>
+      <div class="stage">
+        <div class="surface light"><div data-slot="big"></div><span class="label">On light</span></div>
+        <div class="surface dark"><div data-slot="big"></div><span class="label">On dark</span></div>
+        <div class="surface check"><div data-slot="big"></div><span class="label">Transparent</span></div>
+      </div>
+      <div class="row">
+        <div class="card"><span class="label">Every state</span><div class="states" data-slot="states"></div></div>
+        <div class="card"><span class="label">Today → standalone</span><div class="before" data-slot="before"></div></div>
+      </div>
+      <div class="card" style="margin-top:12px"><span class="label">Other names (click to try)</span><div class="lineup" data-slot="lineup"></div></div>
+    </section>`).join('');
+
+  function render() {
+    const name = nameEl.value, size = Number(sizeEl.value);
+    sizeOut.textContent = size;
+    for (const t of THEMES) {
+      const sec = $(`[data-theme-id="${t.id}"]`);
+      const big = CharaPoc.standalone(name, t.id, { size, state, mono, live: true });
+      sec.querySelectorAll('[data-slot=big]').forEach((n) => { n.innerHTML = big; });
+      $('[data-slot=states]', sec).innerHTML = STATES.map((s) => `<div>${CharaPoc.standalone(name, t.id, { state: s })}<small>${s}</small></div>`).join('') + `<div>${CharaPoc.standalone(name, t.id, { mono: true })}<small>no colour</small></div>`;
+      $('[data-slot=before]', sec).innerHTML = `${CharaPoc.tile(name, t.id, 84)}<span class="arrow" aria-hidden="true">→</span>${CharaPoc.standalone(name, t.id, { size: 96, state, mono, live: true })}`;
+    }
+  }
+  for (const t of THEMES) {
+    const line = $(`[data-theme-id="${t.id}"] [data-slot=lineup]`);
+    line.innerHTML = BOTS.map((b) => `<button type="button" data-name="${b}">${CharaPoc.standalone(b, t.id, { state, mono, live: true })}<small>${b}</small></button>`).join('');
+    line.addEventListener('click', (e) => {
+      const b = e.target.closest('button');
+      if (!b) return;
+      nameEl.value = b.dataset.name;
+      render();
+    });
+  }
+  nameEl.addEventListener('input', render);
+  sizeEl.addEventListener('input', render);
+  render();
+})();
+</script>
