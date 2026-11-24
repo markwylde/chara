@@ -182,8 +182,8 @@ test.describe('animation in the browser', () => {
             content: [el('circle', { class: 'dot', cx: 50, cy: 50, r: 20, fill: '#333' })],
           }),
           animation:
-            `.chara-${id}[data-state] .dot{animation:chara-${id}-wobble 1000s linear infinite}` +
-            `@keyframes chara-${id}-wobble{from,to{opacity:${opacity}}}`,
+            `.chara-${id}[data-state] .dot{animation:chara-${id}_wobble 1000s linear infinite}` +
+            `@keyframes chara-${id}_wobble{from,to{opacity:${opacity}}}`,
         });
       const stage = document.getElementById('stage')!;
       stage.innerHTML =
@@ -195,8 +195,8 @@ test.describe('animation in the browser', () => {
       });
     });
     expect(result).toEqual([
-      { name: 'chara-one-wobble', opacity: '0.25' },
-      { name: 'chara-two-wobble', opacity: '0.75' },
+      { name: 'chara-one_wobble', opacity: '0.25' },
+      { name: 'chara-two_wobble', opacity: '0.75' },
     ]);
   });
 
@@ -221,7 +221,7 @@ test.describe('animation in the browser', () => {
     });
     expect(new Set(result.idle).size).toBeGreaterThanOrEqual(2);
     expect(result.working).toEqual(result.idle);
-    expect(new Set(result.names)).toEqual(new Set(['chara-critter-bounce']));
+    expect(new Set(result.names)).toEqual(new Set(['chara-critter_bounce']));
   });
 
   test('the error state adds a red glow and keeps the colours; mono makes it grey', async ({ page }) => {
@@ -292,4 +292,24 @@ test.describe('animation in the browser', () => {
     }
     expect(frames.size).toBeGreaterThan(1);
   });
+});
+
+test('reduced motion also stops an animation on the root of a custom theme', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await lab(page);
+  const running = await page.evaluate(() => {
+    const { createAvatar, defineTheme } = window.chara;
+    const theme = defineTheme({
+      id: 'rooty',
+      draw: () => ({ background: '#fff', content: [] }),
+      character: ({ el }) => ({ content: [el('circle', { cx: 50, cy: 50, r: 20, fill: '#333' })] }),
+      animation:
+        '.chara-rooty[data-state]{animation:chara-rooty_spin 2s linear infinite}' +
+        '@keyframes chara-rooty_spin{to{transform:rotate(360deg)}}',
+    });
+    const stage = document.getElementById('stage')!;
+    stage.innerHTML = createAvatar('a', { theme, variant: 'standalone', animated: true });
+    return stage.getAnimations({ subtree: true }).length;
+  });
+  expect(running).toBe(0);
 });

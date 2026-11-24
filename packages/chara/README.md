@@ -160,15 +160,15 @@ const orb = defineTheme({
     content: [el('circle', { class: 'orb-ball', cx: 50, cy: 50, r: 30, fill: hsl(rand.int(360), 70, 55) })],
   }),
   animation:
-    '.chara-orb[data-state] .orb-ball{animation:chara-orb-pulse 3s ease-in-out infinite}' +
+    '.chara-orb[data-state] .orb-ball{animation:chara-orb_pulse 3s ease-in-out infinite}' +
     '.chara-orb[data-state=working] .orb-ball{animation-duration:.6s}' +
-    '@keyframes chara-orb-pulse{50%{opacity:.5}}',
+    '@keyframes chara-orb_pulse{50%{opacity:.5}}',
 });
 
 createAvatar('Claudette', { theme: orb, variant: 'standalone', animated: true, state: 'working' });
 ```
 
-Without `character`, asking for the standalone variant throws a `TypeError`; without `animation`, so does `animated`. Give parts a `class` to animate them. Every selector in the CSS must start with `.chara-<theme id>[data-state`, and every keyframes name with `chara-<theme id>-`. That scope is enforced, so one theme's animation can't affect your page, another theme, or a still avatar. `mono` turns colours from `ctx.hsl` grey; literal colours and colours in your CSS are yours to handle (the root has a `data-mono` attribute to select on).
+Without `character`, asking for the standalone variant throws a `TypeError`; without `animation`, so does `animated`. Give parts a `class` to animate them. Every selector in the CSS must start with `.chara-<theme id>[data-state`, and every keyframes name with `chara-<theme id>_`. That scope is enforced, so one theme's animation can't affect your page, another theme, or a still avatar. `mono` turns colours from `ctx.hsl` grey; literal colours and colours in your CSS are yours to handle (the root has a `data-mono` attribute to select on).
 
 ### Safety
 

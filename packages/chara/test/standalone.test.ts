@@ -85,7 +85,7 @@ describe('standalone variant', () => {
         expect(svg).not.toMatch(/-frame"/);
         expect(svg).not.toContain('<style');
         expect(svg).not.toContain('data-state');
-        expect(svg).toContain(`class="chara chara-${theme} chara-d`);
+        expect(svg).toContain(`class="chara chara-${theme} chara_d`);
       }
     }
   });
@@ -178,12 +178,16 @@ describe('animation', () => {
       expect(css).toContain('@media (prefers-reduced-motion:reduce)');
       expect(css).toContain('animation:none!important');
       expect(css).toContain('animation-delay:var(--chara-d,0s)!important');
+      // both frame rules cover the root itself as well as its descendants
+      expect(css).toContain(
+        `.chara-${theme}[data-state],.chara-${theme}[data-state] *{animation:none!important}`,
+      );
       // every keyframes block is owned by the theme
       for (const [, name] of css.matchAll(/@keyframes ([^{]+)\{/g))
-        expect(name).toMatch(new RegExp(`^chara-${theme}-`));
+        expect(name).toMatch(new RegExp(`^chara-${theme}_`));
       // every animation refers to keyframes that exist
       const defined = new Set([...css.matchAll(/@keyframes ([^{]+)\{/g)].map((m) => m[1]));
-      for (const [, name] of css.matchAll(/(chara-[a-z]+-[a-z-]+) [\d.]+s/g)) expect(defined).toContain(name);
+      for (const [, name] of css.matchAll(/(chara-[a-z]+_[a-z-]+) [\d.]+s/g)) expect(defined).toContain(name);
     }
   });
 
@@ -206,10 +210,10 @@ describe('animation', () => {
       const css = /<style>([^<]*)<\/style>/.exec(
         createAvatar('a', { theme, ...standalone, animated: true }),
       )![1]!;
-      expect(css).toContain(`@keyframes chara-${theme}-alarm{0%,100%{filter:drop-shadow(0 0 1.5px #ff5247)`);
+      expect(css).toContain(`@keyframes chara-${theme}_alarm{0%,100%{filter:drop-shadow(0 0 1.5px #ff5247)`);
       expect(css).toContain(`.chara-${theme}[data-state=error][data-mono] .chara-body{`);
       expect(css).toContain(
-        `@keyframes chara-${theme}-alarm-mono{0%,100%{filter:drop-shadow(0 0 1.5px #8c8c8c)`,
+        `@keyframes chara-${theme}_alarm-mono{0%,100%{filter:drop-shadow(0 0 1.5px #8c8c8c)`,
       );
       expect(css).not.toMatch(/saturate|brightness|grayscale/);
       // every red rule has a mono override that comes later
@@ -220,11 +224,11 @@ describe('animation', () => {
 
   it('picks a deterministic timing offset that varies between names', () => {
     const offset = (name: string) =>
-      /chara-d(\d)/.exec(createAvatar(name, { ...standalone, animated: true }))![1];
+      /chara_d(\d)/.exec(createAvatar(name, { ...standalone, animated: true }))![1];
     expect(offset('Claudette')).toBe(offset('claudette '));
     expect(new Set(GOLDEN_NAMES.map(offset)).size).toBeGreaterThan(3);
     // the offset does not change the drawing
-    const drawing = (name: string) => createAvatar(name, { ...standalone }).replace(/chara-d\d/, '');
+    const drawing = (name: string) => createAvatar(name, { ...standalone }).replace(/chara_d\d/, '');
     expect(drawing('Claudette')).toBe(drawing('Claudette'));
   });
 });
@@ -294,7 +298,7 @@ describe('custom theme characters', () => {
 
   it('includes custom animation CSS', () => {
     const css =
-      '.chara-wob[data-state] .spin{animation:chara-wob-spin 2s linear infinite}@keyframes chara-wob-spin{to{transform:rotate(360deg)}}';
+      '.chara-wob[data-state] .spin{animation:chara-wob_spin 2s linear infinite}@keyframes chara-wob_spin{to{transform:rotate(360deg)}}';
     const theme = defineTheme({
       id: 'wob',
       ...base,
@@ -347,9 +351,27 @@ describe('custom theme characters', () => {
   });
 });
 
+describe('theme and timing classes cannot collide', () => {
+  it('keeps the timing class out of reach of a theme called d3', () => {
+    const theme = defineTheme({
+      id: 'd3',
+      draw: () => ({ background: '#fff', content: [] }),
+      character: () => ({ content: [] }),
+      animation: '.chara-d3[data-state] *{opacity:0}',
+    });
+    // the theme's own scope is fine, but no other theme's root carries the class chara-d3
+    expect(createAvatar('a', { theme, variant: 'standalone', animated: true })).toContain(
+      'chara chara-d3 chara_d',
+    );
+    for (const name of GOLDEN_NAMES) {
+      expect(createAvatar(name, { variant: 'standalone' })).not.toMatch(/class="[^"]*chara-d\d/);
+    }
+  });
+});
+
 describe('checkAnimationCss', () => {
   const ok =
-    '.chara-t[data-state=idle] .a,.chara-t[data-state] :is(.b,.c){animation:chara-t-x 1s cubic-bezier(.3,.6,.4,1) infinite}@keyframes chara-t-x{0%,50%{opacity:1}to{opacity:0}}@media (prefers-reduced-motion:reduce){.chara-t[data-state] *{animation:none}}';
+    '.chara-t[data-state=idle] .a,.chara-t[data-state] :is(.b,.c){animation:chara-t_x 1s cubic-bezier(.3,.6,.4,1) infinite}@keyframes chara-t_x{0%,50%{opacity:1}to{opacity:0}}@media (prefers-reduced-motion:reduce){.chara-t[data-state] *{animation:none}}';
 
   it('accepts scoped rules, prefixed keyframes and @media', () => {
     expect(() => checkAnimationCss(ok, 't')).not.toThrow();
@@ -373,7 +395,19 @@ describe('checkAnimationCss', () => {
     ['unscoped rule in media', '@media screen{body{opacity:0}}'],
     ['nested media', '@media screen{@media print{.chara-t[data-state] a{opacity:0}}}'],
     ['unprefixed keyframes', '@keyframes spin{to{opacity:0}}'],
-    ['other theme keyframes', '@keyframes chara-u-spin{to{opacity:0}}'],
+    ['other theme keyframes', '@keyframes chara-u_spin{to{opacity:0}}'],
+    ['keyframes of a theme whose id extends this one', '@keyframes chara-t-x_spin{to{opacity:0}}'],
+    ['hyphen-separated keyframes', '@keyframes chara-t-spin{to{opacity:0}}'],
+    [
+      'NUL that the serializer would strip',
+      '.chara-t[data-state] a{background:u\u0000rl(https://example.invalid/x)}',
+    ],
+    ['quoted parenthesis hiding a selector', '.chara-t[data-state="("],body{opacity:.2}'],
+    [
+      'quoted brace hiding a rule',
+      '@keyframes chara-t_x{from{content:"{"}} body{opacity:.3} .chara-t[data-state]{content:"}"}',
+    ],
+    ['single quotes', ".chara-t[data-state] a{content:'x'}"],
     ['nested rule', '.chara-t[data-state] a{b{opacity:0}}'],
     ['unbalanced', '.chara-t[data-state] a{opacity:0'],
     ['stray brace', '.chara-t[data-state] a{opacity:0}}'],

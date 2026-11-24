@@ -89,7 +89,7 @@ An animated avatar SHALL not move when the viewer has asked for reduced motion.
 
 #### Scenario: Reduced motion preference
 - **WHEN** an animated avatar is shown in a browser with `prefers-reduced-motion: reduce`
-- **THEN** no element of the avatar has a running animation
+- **THEN** no element of the avatar, including its root, has a running animation
 
 ### Requirement: Varied timing
 Animated avatars for different names SHALL be able to start their loops at different offsets, chosen deterministically from the name, so that a group does not move in unison. The offset SHALL NOT change the character's drawing.
@@ -133,7 +133,7 @@ A custom theme SHALL be able to define a standalone drawing and optional animati
 - **THEN** the output contains that CSS in its stylesheet
 
 ### Requirement: Scoped and safe animation CSS
-Animation CSS from any theme SHALL be checked before use and rejected with a `CharaSafetyError` unless all of the following hold. It contains no backslash, `<`, `>`, `&`, `url(`, `image(`, `image-set(` or `expression(`. Its only at-rules are `@keyframes` and `@media`. Every style rule's selectors each begin with the theme's own root class followed by a `data-state` attribute selector. Every keyframes name begins with `chara-<theme id>-`.
+Animation CSS from any theme SHALL be checked before use and rejected with a `CharaSafetyError` unless all of the following hold. It contains no backslash, quote character, `<`, `>`, `&`, `url(`, `image(`, `image-set(`, `expression(`, or character that XML does not allow. Its only at-rules are `@keyframes` and `@media`. Every style rule's selectors each begin with the theme's own root class followed by a `data-state` attribute selector. Every keyframes name begins with `chara-<theme id>_`.
 
 #### Scenario: CSS with an external reference
 - **WHEN** a custom theme's animation CSS contains `@import` or `url(`
@@ -146,6 +146,18 @@ Animation CSS from any theme SHALL be checked before use and rejected with a `Ch
 #### Scenario: Unscoped selector
 - **WHEN** a custom theme's animation CSS contains the rule `body{display:none}`, or a selector list where only the first selector is scoped
 - **THEN** a `CharaSafetyError` is thrown
+
+#### Scenario: Characters removed on output
+- **WHEN** a custom theme's animation CSS spells `url(` with a NUL character inside it, which serialisation would remove
+- **THEN** a `CharaSafetyError` is thrown
+
+#### Scenario: Strings hiding structure
+- **WHEN** a custom theme's animation CSS uses a quoted string containing a brace, comma or parenthesis to hide a rule for `body`
+- **THEN** a `CharaSafetyError` is thrown
+
+#### Scenario: Overlapping theme ids
+- **WHEN** the themes `t` and `t-x` are both in use
+- **THEN** neither can define a keyframes name that the other is allowed to define
 
 #### Scenario: Unprefixed keyframes
 - **WHEN** a custom theme's animation CSS defines `@keyframes spin`

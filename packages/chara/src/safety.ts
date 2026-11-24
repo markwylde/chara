@@ -115,7 +115,9 @@ export class CharaSafetyError extends Error {
   }
 }
 
-const CSS_FORBIDDEN = ['\\', '<', '>', '&', '/*', 'url(', 'image(', 'image-set(', 'expression('];
+// Quotes are forbidden outright: a string could hide braces, commas or
+// parentheses from the structural checks below.
+const CSS_FORBIDDEN = ['\\', '<', '>', '&', '"', "'", '/*', 'url(', 'image(', 'image-set(', 'expression('];
 
 function splitSelectors(list: string): string[] {
   const out: string[] = [];
@@ -138,7 +140,7 @@ function splitSelectors(list: string): string[] {
  * Checks animation CSS for a theme. It may not load anything external or
  * use escapes, its only at-rules are `@keyframes` and `@media`, every
  * selector must start with `.chara-<themeId>[data-state` and every
- * keyframes name with `chara-<themeId>-`. That keeps one theme's animation
+ * keyframes name with `chara-<themeId>_`. Quotes are not allowed. That keeps one theme's animation
  * from touching the host page, another theme, or a still avatar.
  */
 export function checkAnimationCss(css: string, themeId: string): void {
@@ -146,10 +148,13 @@ export function checkAnimationCss(css: string, themeId: string): void {
     throw new CharaSafetyError(`Animation CSS for theme "${themeId}" ${why}`);
   };
   if (typeof css !== 'string') fail('must be a string');
+  // The serializer drops characters XML does not allow, which could join "u" and "rl(" back together.
+  if (stripInvalidXml(css) !== css) fail('contains characters that are not allowed in XML');
   const lower = css.toLowerCase();
   for (const bad of CSS_FORBIDDEN) if (lower.includes(bad)) fail(`must not contain "${bad}"`);
   const scope = `.chara-${themeId}[data-state`;
-  const keyframes = new RegExp(`^chara-${themeId}-[a-z0-9-]+$`);
+  // Theme ids cannot contain "_", so this prefix cannot belong to two themes.
+  const keyframes = new RegExp(`^chara-${themeId}_[a-z0-9-]+$`);
 
   const walk = (src: string, inMedia: boolean): void => {
     let i = 0;
@@ -173,7 +178,7 @@ export function checkAnimationCss(css: string, themeId: string): void {
         if (!at) fail(`uses a disallowed at-rule "${prelude.split(/\s/)[0]}"`);
         else if (at[1]?.toLowerCase() === 'keyframes') {
           if (!keyframes.test(at[2] as string))
-            fail(`must name keyframes "chara-${themeId}-…", got "${at[2]}"`);
+            fail(`must name keyframes "chara-${themeId}_…", got "${at[2]}"`);
           if (body.includes('@')) fail('has an at-rule inside keyframes');
         } else if (inMedia) fail('nests @media rules');
         else walk(body, true);

@@ -43,7 +43,7 @@ export interface Theme {
   /**
    * CSS for animated standalone avatars, covering every state. Each selector
    * must start with `.chara-<id>[data-state` and each keyframes name with
-   * `chara-<id>-`; see `checkAnimationCss`.
+   * `chara-<id>_`; see `checkAnimationCss`.
    */
   readonly animation?: string;
 }

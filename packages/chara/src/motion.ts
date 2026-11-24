@@ -52,7 +52,7 @@ export function scope(themeId: string) {
     /** An animated avatar of this theme in one state. */
     in: (state: string) => `.chara-${themeId}[data-state=${state}]`,
     /** A keyframes name owned by this theme. */
-    k: (name: string) => `chara-${themeId}-${name}`,
+    k: (name: string) => `chara-${themeId}_${name}`,
   };
 }
 

@@ -135,7 +135,7 @@ export function createAvatarTree(name: string, options: CoreAvatarOptions): SvgN
       {
         ...rootAttrs,
         overflow: 'visible',
-        class: `chara chara-${theme.id} chara-d${delay}`,
+        class: `chara chara-${theme.id} chara_d${delay}`,
         'data-state': animated ? state : undefined,
         'data-mono': mono ? '' : undefined,
       },

@@ -5,7 +5,7 @@ export type AvatarState = (typeof STATES)[number];
 export const VARIANTS = ['tile', 'standalone'] as const;
 export type AvatarVariant = (typeof VARIANTS)[number];
 
-/** Number of `chara-d<n>` timing-offset classes. */
+/** Number of `chara_d<n>` timing-offset classes. The underscore keeps them apart from theme classes. */
 export const DELAY_STEPS = 8;
 
 /** Returns the state, defaulting to "idle". Throws a TypeError for anything else. */
@@ -38,9 +38,9 @@ export function animationScope(themeId: string): string {
 export function frameCss(themeId: string, themeCss: string): string {
   const root = animationScope(themeId);
   let delays = '';
-  for (let i = 1; i < DELAY_STEPS; i++) delays += `${root}.chara-d${i}{--chara-d:-${(i * 0.6).toFixed(1)}s}`;
+  for (let i = 1; i < DELAY_STEPS; i++) delays += `${root}.chara_d${i}{--chara-d:-${(i * 0.6).toFixed(1)}s}`;
   return (
-    `${root} *{animation-delay:var(--chara-d,0s)!important}${delays}${themeCss}` +
-    `@media (prefers-reduced-motion:reduce){${root} *{animation:none!important}}`
+    `${root},${root} *{animation-delay:var(--chara-d,0s)!important}${delays}${themeCss}` +
+    `@media (prefers-reduced-motion:reduce){${root},${root} *{animation:none!important}}`
   );
 }
