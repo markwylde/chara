@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 
 // Captures the playground's key states for review. Runs only when SCREENSHOT_DIR is set:
 //   SCREENSHOT_DIR=/path/to/dir npm run test:e2e
@@ -7,35 +7,44 @@ test.skip(!dir, 'Set SCREENSHOT_DIR to capture screenshots');
 
 const shot = (name: string) => `${dir}/${name}.png`;
 
-test('screenshots of key states', async ({ page, context }) => {
-  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
-  await page.setViewportSize({ width: 1280, height: 900 });
+const pick = (page: Page, group: string, value: string) =>
+  page.locator(`input[name="${group}"][value="${value}"]`).check({ force: true });
 
-  await page.goto('');
-  await page.locator('#name-input').fill('Claudette');
-  await page.screenshot({ path: shot('01-overview-light'), fullPage: true });
+test('screenshots of the studio', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.setViewportSize({ width: 1360, height: 900 });
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await page.goto('?n=Claudette');
+  await page.waitForTimeout(600);
+  await page.screenshot({ path: shot('01-studio-dark'), fullPage: true });
+
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.goto('?n=Claudette&t=mecha&st=working&is=44&ct=light');
+  await page.waitForTimeout(600);
+  await page.screenshot({ path: shot('02-studio-light-mecha-working'), fullPage: true });
+
+  await page.goto('?n=Claudette&v=0&r=50&s=160&t=sigil&bg=clear');
+  await page.locator('#copy-output').click();
+  await expect(page.locator('#notice')).toContainText('Copied');
+  await page.locator('main.studio').screenshot({ path: shot('03-tile-circle-copied') });
 
   await page.emulateMedia({ colorScheme: 'dark' });
-  await page.screenshot({ path: shot('02-overview-dark'), fullPage: true });
+  await page.goto('?n=Claudette&is=56&st=thinking');
+  await page.waitForTimeout(600);
+  await page.locator('section.context').screenshot({ path: shot('04-in-your-app-large-icons') });
 
-  await page.locator('#radius-input').fill('50');
-  await page.locator('#size-input').fill('140');
-  await page.locator('section[data-theme-id="sigil"]').screenshot({ path: shot('03-sigil-circle-large') });
+  await page.goto('?n=Claudette&st=success&gc=40&gs=96');
+  await page.waitForTimeout(600);
+  await page.locator('section.gallery').screenshot({ path: shot('05-gallery-animated') });
 
-  await page.locator('#radius-input').fill('24');
-  await page.getByRole('radio', { name: 'Critter' }).check({ force: true });
-  await page.locator('section.gallery').screenshot({ path: shot('04-gallery-critter') });
-  await page.getByRole('radio', { name: 'Sigil' }).check({ force: true });
-  await page.locator('section.gallery').screenshot({ path: shot('05-gallery-sigil') });
-
-  await page.locator('section[data-theme-id="critter"]').getByRole('button', { name: 'Copy React' }).click();
-  await expect(page.locator('#notice')).toContainText('Copied');
-  await page.screenshot({ path: shot('06-copied-confirmation') });
+  await page.goto('?n=Claudette&st=sleeping&m=1&bg=custom&bc=%23ffd9a8');
+  await page.locator('summary').click();
+  await page.waitForTimeout(1200);
+  await page.locator('main.studio').screenshot({ path: shot('06-sleeping-mono-custom-backdrop') });
 
   await page.setViewportSize({ width: 400, height: 860 });
-  await page.emulateMedia({ colorScheme: 'light' });
-  await page.goto('');
-  await page.screenshot({ path: shot('07-mobile'), fullPage: false });
+  await page.goto('?n=Claudette');
+  await page.screenshot({ path: shot('07-mobile'), fullPage: true });
 });
 
 test('screenshot of the clipboard fallback', async ({ page }) => {
@@ -44,36 +53,15 @@ test('screenshot of the clipboard fallback', async ({ page }) => {
       value: { writeText: () => Promise.reject(new Error('denied')) },
     });
   });
-  await page.setViewportSize({ width: 1280, height: 700 });
+  await page.setViewportSize({ width: 1360, height: 900 });
   await page.goto('');
-  await page.locator('section[data-theme-id="mecha"]').getByRole('button', { name: 'Copy SVG' }).click();
+  await pick(page, 'output', 'svg');
+  await page.locator('#copy-output').click();
   await expect(page.locator('#copy-fallback')).toBeVisible();
-  await page.screenshot({ path: shot('08-clipboard-fallback') });
+  await page.locator('main.studio').screenshot({ path: shot('08-clipboard-fallback') });
 });
 
-test('screenshots of standalone and animated characters', async ({ page }) => {
-  await page.setViewportSize({ width: 1280, height: 900 });
-  await page.goto('');
-  await page.locator('#name-input').fill('Claudette');
-  await page.getByRole('radio', { name: 'Standalone' }).check({ force: true });
-  await page.locator('#size-input').fill('200');
-  await page.screenshot({ path: shot('09-standalone-light'), fullPage: true });
-
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await page.locator('#animate-input').check();
-  await page.locator('#state-input').selectOption('sleeping');
-  await page.waitForTimeout(1200);
-  await page.screenshot({ path: shot('10-standalone-sleeping-dark'), fullPage: true });
-
-  await page.emulateMedia({ colorScheme: 'light' });
-  await page.locator('#state-input').selectOption('error');
-  await page.waitForTimeout(700);
-  await page.locator('main.themes').screenshot({ path: shot('11-error-glow') });
-
-  await page.locator('#state-input').selectOption('idle');
-  await page.locator('#mono-input').check();
-  await page.locator('main.themes').screenshot({ path: shot('12-no-colour') });
-
+test('screenshot of every state', async ({ page }) => {
   // Every state of every theme, side by side
   await page.goto('lab.html');
   await expect(page.locator('body[data-ready="true"]')).toBeAttached();

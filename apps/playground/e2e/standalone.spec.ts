@@ -3,10 +3,11 @@ import { createAvatar } from '../../../packages/chara/src/index';
 
 const GREY = /^rgba?\((\d+), \1, \1(, [\d.]+)?\)$/;
 
-async function standalone(page: Page) {
-  await page.goto('');
-  await page.getByRole('radio', { name: 'Standalone' }).check({ force: true });
-}
+const pick = (page: Page, group: string, value: string) =>
+  page.locator(`input[name="${group}"][value="${value}"]`).check({ force: true });
+const clipboard = (page: Page) => page.evaluate(() => navigator.clipboard.readText());
+/** Everything that follows the studio's look; the state picker itself always shows animated previews. */
+const FOLLOWERS = '.stage svg, .mocks svg, ul.grid svg';
 
 async function lab(page: Page) {
   await page.goto('lab.html');
@@ -15,103 +16,103 @@ async function lab(page: Page) {
 
 test.describe('playground controls', () => {
   test('standalone previews have no background', async ({ page }) => {
-    await standalone(page);
-    const previews = page.locator('section.sheet .surface svg');
-    await expect(previews).toHaveCount(6);
-    await expect(page.locator('section.sheet .surface svg.chara')).toHaveCount(6);
-    await expect(page.locator('section.sheet .surface svg rect[width="100"][height="100"]')).toHaveCount(0);
-    await expect(page.locator('section.sheet .surface svg clipPath[id$="-frame"]')).toHaveCount(0);
-    // the gallery and sidebars follow the variant
-    await expect(page.locator('section.gallery svg.chara')).toHaveCount(20);
+    await page.goto('?v=0');
+    await expect(page.locator('.stage svg clipPath[id$="-frame"]')).toHaveCount(2);
+    await pick(page, 'variant', 'standalone');
+    await expect(page.locator('.stage svg.chara')).toHaveCount(2);
+    await expect(page.locator('.stage svg rect[width="100"][height="100"]')).toHaveCount(0);
+    await expect(page.locator('.stage svg clipPath[id$="-frame"]')).toHaveCount(0);
+    // the gallery and the app examples follow the variant
+    await expect(page.locator('ul.grid svg.chara')).toHaveCount(20);
+    await expect(page.locator('.sidebar svg.chara')).toHaveCount(5);
   });
 
-  test('a chosen state applies to the sheets but never the gallery', async ({ page }) => {
-    await standalone(page);
-    await page.locator('#animate-input').check();
-    await page.locator('#state-input').selectOption('sleeping');
-    await expect(page.locator('section.sheet .surface svg[data-state="sleeping"]')).toHaveCount(6);
-    await expect(page.locator('section.gallery svg[data-state]')).toHaveCount(0);
-    await expect(page.locator('.sidebars svg[data-state]')).toHaveCount(0);
-    // the Zs are showing
-    const z = page.locator('section[data-theme-id="mecha"] .surface.light .chara-zzz');
-    await expect(z).toHaveCSS('display', 'block');
+  test('a chosen state applies to the stage', async ({ page }) => {
+    await page.goto('?t=mecha');
+    await pick(page, 'state', 'sleeping');
+    await expect(page.locator('.stage svg[data-state="sleeping"]')).toHaveCount(2);
+    await expect(page.locator('.stage .pane.light .chara-zzz')).toHaveCSS('display', 'block');
+    // every state is previewed in the picker, whatever is selected
+    await expect(page.locator('.states svg[data-state]')).toHaveCount(6);
   });
 
-  test('animation and state controls are disabled for tiles', async ({ page }) => {
-    await page.goto('');
+  test('animation is off for tiles until a state is picked', async ({ page }) => {
+    await page.goto('?v=0');
     await expect(page.locator('#animate-input')).toBeDisabled();
-    await expect(page.locator('#state-input')).toBeDisabled();
-    await page.getByRole('radio', { name: 'Standalone' }).check({ force: true });
+    await expect(page.locator('#cycle-input')).toBeDisabled();
+    await expect(page.locator('#radius-input')).toBeEnabled();
+    await expect(page.locator(FOLLOWERS).and(page.locator('[data-state]'))).toHaveCount(0);
+    await pick(page, 'state', 'working');
+    await expect(page.locator('input[name="variant"][value="standalone"]')).toBeChecked();
     await expect(page.locator('#animate-input')).toBeEnabled();
-    await expect(page.locator('#state-input')).toBeDisabled();
-    await page.locator('#animate-input').check();
-    await expect(page.locator('#state-input')).toBeEnabled();
+    await expect(page.locator('#animate-input')).toBeChecked();
+    await expect(page.locator('#radius-input')).toBeDisabled();
+    await expect(page.locator('.stage svg[data-state="working"]')).toHaveCount(2);
   });
 
   test('going back to tiles after animating draws and copies plain tiles', async ({ page, context }) => {
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
     const errors: string[] = [];
     page.on('pageerror', (e) => errors.push(e.message));
-    await standalone(page);
-    await page.locator('#animate-input').check();
-    await page.locator('#state-input').selectOption('working');
-    await page.getByRole('radio', { name: 'Tile' }).check({ force: true });
-    await expect(page.locator('section.sheet .surface svg')).toHaveCount(6);
-    await expect(page.locator('section.sheet svg[data-state], section.sheet svg.chara')).toHaveCount(0);
-    const sheet = page.locator('section[data-theme-id="mecha"]');
-    await sheet.getByRole('button', { name: 'Copy SVG' }).click();
+    await page.goto('?t=mecha');
+    await pick(page, 'state', 'working');
+    await pick(page, 'variant', 'tile');
+    await expect(page.locator('.stage svg')).toHaveCount(2);
+    await expect(page.locator(FOLLOWERS).and(page.locator('[data-state], .chara'))).toHaveCount(0);
+    await pick(page, 'output', 'svg');
+    await page.locator('#copy-output').click();
     await expect(page.locator('#notice')).toContainText('Copied Mecha SVG');
-    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
-      createAvatar('Maple', { theme: 'mecha', size: 96, radius: 24 }),
-    );
-    await sheet.getByRole('button', { name: 'Copy React' }).click();
+    expect(await clipboard(page)).toBe(createAvatar('Maple', { theme: 'mecha', size: 200, radius: 24 }));
+    await pick(page, 'output', 'react');
+    await page.locator('#copy-output').click();
     await expect(page.locator('#notice')).toContainText('React snippet');
-    const snippet = await page.evaluate(() => navigator.clipboard.readText());
-    expect(snippet).toContain('<Avatar name={"Maple"} theme="mecha" size={96} radius={24} />');
+    const snippet = await clipboard(page);
+    expect(snippet).toContain('<Avatar name={"Maple"} theme="mecha" size={200} radius={24} />');
     expect(snippet).not.toMatch(/variant|animated|state|mono/);
     expect(errors).toEqual([]);
   });
 
   test('no colour draws every preview in greys', async ({ page }) => {
-    for (const variant of ['Tile', 'Standalone']) {
-      await page.goto('');
-      await page.getByRole('radio', { name: variant }).check({ force: true });
-      await page.locator('#mono-input').check();
-      const colours = await page.evaluate(() => {
+    for (const query of ['?v=0', '']) {
+      await page.goto(query);
+      await page.locator('#mono-input').check({ force: true });
+      const colours = await page.evaluate((selector) => {
         const out: string[] = [];
-        for (const node of document.querySelectorAll('section.sheet .surface svg *')) {
-          if (node.closest('defs') && node.tagName !== 'stop') continue;
-          const style = getComputedStyle(node);
-          for (const value of [style.fill, style.stroke, style.stopColor]) {
-            if (value.startsWith('rgb')) out.push(value);
+        for (const svg of document.querySelectorAll(
+          `${selector}, .theme-tabs svg, .states svg, .wordmark svg`,
+        )) {
+          for (const node of svg.querySelectorAll('*')) {
+            if (node.closest('defs') && node.tagName !== 'stop') continue;
+            const style = getComputedStyle(node);
+            for (const value of [style.fill, style.stroke, style.stopColor]) {
+              if (value.startsWith('rgb')) out.push(value);
+            }
           }
         }
         return out;
-      });
-      expect(colours.length).toBeGreaterThan(20);
-      for (const colour of colours) expect(colour, variant).toMatch(GREY);
+      }, FOLLOWERS);
+      expect(colours.length).toBeGreaterThan(100);
+      for (const colour of colours) expect(colour, query).toMatch(GREY);
     }
   });
 
   test('copy output reflects the new options', async ({ page, context }) => {
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
-    await standalone(page);
-    await page.locator('#animate-input').check();
-    await page.locator('#state-input').selectOption('working');
-    await page.locator('#mono-input').check();
-    const sheet = page.locator('section[data-theme-id="critter"]');
-    await sheet.getByRole('button', { name: 'Copy React' }).click();
+    await page.goto('?s=96');
+    await pick(page, 'state', 'working');
+    await page.locator('#mono-input').check({ force: true });
+    await page.locator('#copy-output').click();
     await expect(page.locator('#notice')).toContainText('React snippet');
-    expect(await page.evaluate(() => navigator.clipboard.readText())).toContain(
+    expect(await clipboard(page)).toContain(
       '<Avatar name={"Maple"} theme="critter" size={96} variant="standalone" animated state="working" mono />',
     );
-    await sheet.getByRole('button', { name: 'Copy SVG' }).click();
+    await pick(page, 'output', 'svg');
+    await page.locator('#copy-output').click();
     await expect(page.locator('#notice')).toContainText('Copied Critter SVG');
-    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+    expect(await clipboard(page)).toBe(
       createAvatar('Maple', {
         theme: 'critter',
         size: 96,
-        radius: 24,
         variant: 'standalone',
         animated: true,
         state: 'working',
@@ -120,19 +121,20 @@ test.describe('playground controls', () => {
     );
   });
 
-  test('the largest size does not scroll sideways on a phone', async ({ page }) => {
+  test('the largest sizes do not scroll sideways on a phone', async ({ page }) => {
     await page.setViewportSize({ width: 400, height: 800 });
-    await standalone(page);
-    await page.locator('#animate-input').check();
-    await page.locator('#state-input').selectOption('success');
-    await page.locator('#size-input').fill('360');
-    await expect(page.locator('section[data-theme-id="mecha"] .surface.light svg')).toHaveAttribute(
-      'width',
-      '360',
-    );
+    await page.goto('');
+    await pick(page, 'state', 'success');
+    await page.locator('#size-input').fill('400');
+    await page.locator('#icon-size-input').fill('72');
+    await page.locator('#gallery-size-input').fill('160');
+    await expect(page.locator('.stage .pane.light svg')).toHaveAttribute('width', '400');
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth),
     ).toBeLessThanOrEqual(0);
+    const box = await page.locator('.stage .pane.light svg').boundingBox();
+    expect(box!.width).toBeLessThanOrEqual(400);
+    expect(Math.abs(box!.width - box!.height)).toBeLessThan(1);
   });
 });
 
