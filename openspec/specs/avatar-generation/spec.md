@@ -235,7 +235,7 @@ Callers SHALL pick a theme either by its built-in id (`mecha`, `critter`, `sigil
 - **THEN** the output equals the Mecha output for the same name
 
 ### Requirement: Custom themes
-The library SHALL expose a public API for defining a theme. A theme is an id (lowercase letters, digits and hyphens) plus a draw function, and optionally a character function and animation CSS. Both functions receive a seeded random source and drawing helpers; draw returns a background and content nodes, character returns content nodes only. Custom themes SHALL get determinism, normalisation, the output formats, the safety rules and all options in the same way as built-in themes. An invalid theme id SHALL be rejected when the theme is defined.
+The library SHALL expose a public API for defining a theme. A theme is an id (lowercase letters, digits and hyphens) plus a draw function, and optionally a character function and animation CSS. Both functions receive a seeded random source and drawing helpers; draw returns a background and content nodes, character returns content nodes only. Custom themes SHALL behave like built-in themes in every other respect. An invalid theme id SHALL be rejected when the theme is defined.
 
 #### Scenario: Custom theme renders
 - **WHEN** a custom theme that draws a single circle is defined and used to generate an avatar
