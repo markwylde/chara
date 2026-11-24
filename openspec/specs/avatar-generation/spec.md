@@ -109,8 +109,6 @@ The library SHALL return a self-contained, well-formed SVG document string using
 ### Requirement: Safe SVG content
 Every avatar, from a built-in or a custom theme, SHALL contain only elements and attributes on the library's published allowlist. URL references SHALL point only to IDs inside the same document. Any other element, attribute or reference SHALL be rejected with an error at generation time, never written to the output. The allowlist excludes scripts, event handlers, `foreignObject`, `href`/`xlink:href` and `style` attributes.
 
-The allowlist includes `class` (letters, digits, `-`, `_` and spaces only), and `display` with the value `none` only. A stylesheet element is allowed in exactly one place: as a direct child of the root, which only the library can write, holding animation CSS that has passed the animation CSS checks. Theme drawings are always nested below the root, so a theme SHALL NOT be able to add a stylesheet. The published tree check SHALL accept every avatar the library generates, including animated ones.
-
 #### Scenario: Built-in output is safe
 - **WHEN** avatars are generated for the golden names in every built-in theme
 - **THEN** none contains a `<script>`, an `on*` attribute or a URL other than a local `#id` reference
@@ -145,6 +143,17 @@ The allowlist includes `class` (letters, digits, `-`, `_` and spaces only), and 
 
 #### Scenario: Animated output passes the published check
 - **WHEN** an animated avatar's tree is passed to the published tree check
+- **THEN** it is accepted
+
+### Requirement: Classes and the library stylesheet
+The allowlist SHALL include `class` (letters, digits, `-`, `_` and spaces only) and `display` with the value `none` only. A stylesheet element SHALL be allowed in exactly one place: as a direct child of the root, which only the library can write, holding animation CSS that has passed the animation CSS checks. A theme SHALL NOT be able to add a stylesheet. The published tree check SHALL accept every avatar the library generates, including animated ones.
+
+#### Scenario: Theme adds a stylesheet
+- **WHEN** a custom theme's drawing contains a `style` element
+- **THEN** a `CharaSafetyError` is thrown
+
+#### Scenario: Generated avatars pass the check
+- **WHEN** an animated avatar from a built-in theme is checked with the published tree check
 - **THEN** it is accepted
 
 ### Requirement: Data URI output
@@ -226,7 +235,7 @@ Callers SHALL pick a theme either by its built-in id (`mecha`, `critter`, `sigil
 - **THEN** the output equals the Mecha output for the same name
 
 ### Requirement: Custom themes
-The library SHALL expose a public API for defining a theme. A theme is an id (lowercase letters, digits and hyphens) plus a draw function, and optionally a standalone character drawing and animation CSS. The draw function receives a seeded random source and drawing helpers, and returns a background and content nodes. The character function receives the same and returns content nodes only. Custom themes SHALL get determinism, normalisation, the output formats, the safety rules and all options in the same way as built-in themes. An invalid theme id SHALL be rejected when the theme is defined.
+The library SHALL expose a public API for defining a theme. A theme is an id (lowercase letters, digits and hyphens) plus a draw function, and optionally a character function and animation CSS. Both functions receive a seeded random source and drawing helpers; draw returns a background and content nodes, character returns content nodes only. Custom themes SHALL get determinism, normalisation, the output formats, the safety rules and all options in the same way as built-in themes. An invalid theme id SHALL be rejected when the theme is defined.
 
 #### Scenario: Custom theme renders
 - **WHEN** a custom theme that draws a single circle is defined and used to generate an avatar
