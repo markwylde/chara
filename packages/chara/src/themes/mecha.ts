@@ -101,5 +101,3 @@ export const mecha = defineTheme({
     return { background: bg, content: [...antenna, ...ears, head, ...eyes, ...mouth, ...extra] };
   },
 });
-
-export default mecha;

@@ -144,5 +144,3 @@ export const critter = defineTheme({
     };
   },
 });
-
-export default critter;

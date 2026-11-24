@@ -5,7 +5,7 @@
 - [x] 1.1 Make an initial commit on `main` with the OpenSpec scaffolding, then create a git worktree on branch `feat/chara-avatar-library`; verify with `git worktree list`
 - [x] 1.2 Add the root `package.json` (private, npm workspaces `packages/*` and `apps/*`, Node ≥20 engines), `.gitignore`, MIT `LICENSE`, `tsconfig.base.json` (strict) and `biome.json`; verify that `npm install` succeeds and `npx biome check .` runs
 - [x] 1.3 Scaffold `packages/chara` (entries `.`, `./core`, `./themes/*`) and `packages/chara-react` (externals `react`, `react/jsx-runtime` and `@markwylde/chara`) with `package.json` (`exports`, `sideEffects: false`, `files: ["dist"]`, `publishConfig.access: public`), tsup and Vitest configs; verify that `npm run build -ws` creates ESM, CJS and `.d.ts` files for every entry
-- [ ] 1.4 Add the root scripts `check`, `typecheck`, `test` and `build`; verify each runs green
+- [x] 1.4 Add the root scripts `check`, `typecheck`, `test` and `build`; verify each runs green
 
 ## 2. Core engine (`@markwylde/chara`)
 
@@ -49,10 +49,10 @@
 
 ## 6. Packaging, CI and release readiness
 
-- [ ] 6.1 Add the packed-consumer test script. It packs both packages into a temporary project and checks ESM import, CJS require, the `/core` and `/themes/*` subpaths, `tsc` against the declarations, and that the React build contains no React or core source. Verify that it passes locally
-- [ ] 6.2 Add a GitHub Actions CI workflow (Biome, typecheck, unit tests on a React 18/19 matrix, build, packed-consumer test, Playwright) and verify with `act` or by pushing the branch
-- [ ] 6.3 Add a GitHub Pages deploy workflow for the playground on pushes to `main`
-- [ ] 6.4 Add a root `README.md` (what Chara is, the three themes with images, package links, playground link) and verify that `npm pack --dry-run` lists only `dist`, `README`, `LICENSE` and `package.json` for both packages
+- [x] 6.1 Add the packed-consumer test script. It packs both packages into a temporary project and checks ESM import, CJS require, the `/core` and `/themes/*` subpaths, `tsc` against the declarations, and that the React build contains no React or core source. Verify that it passes locally
+- [x] 6.2 Add a GitHub Actions CI workflow (Biome, typecheck, unit tests on a React 18/19 matrix, build, packed-consumer test, Playwright) and verify with `act` or by pushing the branch
+- [x] 6.3 Add a GitHub Pages deploy workflow for the playground on pushes to `main`
+- [x] 6.4 Add a root `README.md` (what Chara is, the three themes with images, package links, playground link) and verify that `npm pack --dry-run` lists only `dist`, `README`, `LICENSE` and `package.json` for both packages
 
 ## Workflow follow-up
 

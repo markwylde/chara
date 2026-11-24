@@ -140,5 +140,3 @@ export const sigil = defineTheme({
     return { background: ref(gradient), content: [...border, ...half, mirrorX(half)] };
   },
 });
-
-export default sigil;

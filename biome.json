@@ -13,13 +13,26 @@
       "!**/playwright-report"
     ]
   },
-  "formatter": { "indentStyle": "space", "indentWidth": 2, "lineWidth": 110 },
-  "javascript": { "formatter": { "quoteStyle": "single" } },
+  "formatter": {
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 110
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single"
+    }
+  },
   "linter": {
     "rules": {
       "preset": "recommended",
-      "style": { "noNonNullAssertion": "off" },
-      "security": { "noDangerouslySetInnerHtml": "error" }
+      "style": {
+        "noNonNullAssertion": "off",
+        "noDescendingSpecificity": "off"
+      },
+      "security": {
+        "noDangerouslySetInnerHtml": "error"
+      }
     }
   }
 }

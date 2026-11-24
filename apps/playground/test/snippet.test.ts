@@ -13,6 +13,7 @@ function evaluate(snippet: string): Record<string, unknown> {
 }
 
 describe('buildReactSnippet', () => {
+  // biome-ignore lint/suspicious/noTemplateCurlyInString: a literal ${x} is the input under test
   it.each(['Maple', 'Ma"p{le}', "it's\nmultiline", '</script>', '`${x}`'])('round-trips %j', (name) => {
     const props = evaluate(buildReactSnippet({ name, theme: 'critter', size: 48, radius: 50 }));
     expect(props).toEqual({ name, theme: 'critter', size: 48, radius: 50 });
