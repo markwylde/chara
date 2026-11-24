@@ -61,6 +61,22 @@ To run the React tests against React 18, run `node scripts/use-react.mjs 18` and
 
 Golden snapshots of every theme live in `packages/chara/test/__golden__`. If a change alters them, it is a breaking change to the output (see Stability in the core README).
 
+### Releasing
+
+Both packages share one version and are published together by the `Release` workflow when a `v*` tag is pushed.
+
+```sh
+node scripts/set-version.mjs 0.2.0   # sets both packages and the React package's range for the core
+npm install                          # updates the lockfile
+git commit -am "Release 0.2.0"
+git tag v0.2.0
+git push --follow-tags
+```
+
+The workflow checks that the tag matches both versions, runs every check and test, then publishes `@markwylde/chara` followed by `@markwylde/chara-react` with npm provenance. A version that is already on npm is skipped, so a failed run can be re-run. Versions with a suffix, such as `0.2.0-beta.1`, are published under the `next` tag.
+
+It needs an `NPM_TOKEN` repository secret: an npm granular access token that can read and write packages in the `@markwylde` scope.
+
 ## Licence
 
 MIT
