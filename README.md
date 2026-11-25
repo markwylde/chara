@@ -63,19 +63,20 @@ Golden snapshots of every theme live in `packages/chara/test/__golden__`. If a c
 
 ### Releasing
 
-Both packages share one version and are published together by the `Release` workflow when a `v*` tag is pushed.
+Releases are automatic. On every push to `main`, the `Release` workflow runs every check, then [semantic-release](https://semantic-release.gitbook.io/) reads the commits since the last `v*` tag. If any call for a release, it picks the version, updates `CHANGELOG.md` and both package versions, commits that back to `main` with a tag, publishes `@markwylde/chara` and then `@markwylde/chara-react` to npm, and creates a GitHub release. Configuration is in `.releaserc.json`.
 
-```sh
-node scripts/set-version.mjs 0.2.0   # sets both packages and the React package's range for the core
-npm install                          # updates the lockfile
-git commit -am "Release 0.2.0"
-git tag v0.2.0
-git push --follow-tags
-```
+Commit messages decide the version, using [Conventional Commits](https://www.conventionalcommits.org/):
 
-The workflow checks that the tag matches both versions, runs every check and test, then publishes `@markwylde/chara` followed by `@markwylde/chara-react` with npm provenance. A version that is already on npm is skipped, so a failed run can be re-run. Versions with a suffix, such as `0.2.0-beta.1`, are published under the `next` tag.
+| Commit                                                           | Release              |
+| ---------------------------------------------------------------- | -------------------- |
+| `fix: keep ids unique across variants`                           | patch, 0.1.0 → 0.1.1 |
+| `feat: add a wave animation`                                     | minor, 0.1.0 → 0.2.0 |
+| `feat!: …` or a `BREAKING CHANGE:` footer                        | major, 0.1.0 → 1.0.0 |
+| `docs:`, `chore:`, `test:`, `refactor:`, `ci:` and anything else | no release           |
 
-It needs an `NPM_TOKEN` repository secret: an npm granular access token that can read and write packages in the `@markwylde` scope.
+Anything that changes the drawings for an existing name changes the output (see Stability in the core README), so it needs a `feat:` at least, and a breaking change once the packages reach 1.0.
+
+npm authenticates with [trusted publishing](https://docs.npmjs.com/trusted-publishers), so there is no npm token. Each package on npmjs.com has a trusted publisher for the `markwylde/chara` repository and the `release.yml` workflow, and packages get provenance automatically.
 
 ## Licence
 

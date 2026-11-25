@@ -1,44 +1,50 @@
 name: Release
 
-# Publishes both packages to npm when a version tag is pushed:
-#   node scripts/set-version.mjs 0.2.0 && git commit -am "Release 0.2.0" && git tag v0.2.0 && git push --follow-tags
+# On every push to main, semantic-release reads the conventional commits since the last
+# v* tag and, if any call for a release, it:
+#   1. picks the version (fix → patch, feat → minor, BREAKING CHANGE → major)
+#   2. writes CHANGELOG.md and sets the version on both packages
+#   3. commits that back to main and tags it
+#   4. publishes @markwylde/chara, then @markwylde/chara-react, using npm trusted publishing
+#   5. creates the GitHub release
+# Configuration is in .releaserc.json.
 on:
   push:
-    tags: ["v*"]
+    branches: [main]
 
 permissions:
-  contents: read
-  id-token: write # npm provenance, and trusted publishing if it is configured on npmjs.com
+  contents: write # push the release commit and tag
+  issues: write # comment on released issues
+  pull-requests: write # comment on released pull requests
+  id-token: write # npm trusted publishing (OIDC); also gives provenance
 
 concurrency:
   group: release
   cancel-in-progress: false
 
 jobs:
-  publish:
-    name: Publish to npm
+  release:
+    name: Release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # semantic-release needs every commit and tag
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: npm
           registry-url: https://registry.npmjs.org
+          # No dependency cache in release builds.
+      - name: Check npm supports trusted publishing
+        run: |
+          npm --version
+          node -e "const [a,b,c]=process.argv[1].split('.').map(Number); if (a<11||(a===11&&(b<5||(b===5&&c<1)))) { console.error('npm 11.5.1 or later is needed for trusted publishing'); process.exit(1) }" "$(npm --version)"
       - run: npm ci
-      - name: Check the tag matches both package versions
-        run: node scripts/set-version.mjs --check "${GITHUB_REF_NAME#v}"
       - run: npm run check
       - run: npm run build
       - run: npm run typecheck
       - run: npm test
       - run: npm run test:packed
-      # The core goes first: the React package depends on this exact release line.
-      - name: Publish @markwylde/chara
-        run: node scripts/publish.mjs @markwylde/chara
+      - run: npx semantic-release
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      - name: Publish @markwylde/chara-react
-        run: node scripts/publish.mjs @markwylde/chara-react
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

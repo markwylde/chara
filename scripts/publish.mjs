@@ -1,5 +1,6 @@
 // Publishes one workspace to npm, unless that exact version is already there.
-// That makes a re-run of a half-finished release safe.
+// That makes a re-run of a half-finished release safe. semantic-release calls this from the
+// Release workflow; run it by hand (after npm login) only for the very first publish.
 //   node scripts/publish.mjs @markwylde/chara
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
@@ -33,7 +34,6 @@ if (published) {
 // Pre-releases (0.2.0-beta.1) go to the "next" tag so "latest" stays stable.
 const tag = version.includes('-') ? 'next' : 'latest';
 const args = ['publish', '-w', name, '--access', 'public', '--tag', tag];
-// Provenance needs the identity token GitHub Actions provides.
-if (process.env.GITHUB_ACTIONS) args.push('--provenance');
+// In GitHub Actions npm authenticates with trusted publishing (OIDC) and adds provenance itself.
 if (process.argv.includes('--dry-run')) args.push('--dry-run');
 execFileSync('npm', args, { cwd: root, stdio: 'inherit' });
