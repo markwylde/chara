@@ -78,6 +78,21 @@ Anything that changes the drawings for an existing name changes the output (see 
 
 npm authenticates with [trusted publishing](https://docs.npmjs.com/trusted-publishers), so there is no npm token. Each package on npmjs.com has a trusted publisher for the `markwylde/chara` repository and the `release.yml` workflow, and packages get provenance automatically.
 
+#### First release (once)
+
+npm only lets you add a trusted publisher to a package that already exists, so 0.1.0 is published by hand. Until a `v*` tag exists, the workflow skips the release.
+
+```sh
+git checkout main && git pull
+npm ci && npm run build
+npm login
+node scripts/publish.mjs @markwylde/chara
+node scripts/publish.mjs @markwylde/chara-react
+git tag v0.1.0 && git push origin v0.1.0
+```
+
+Then, on npmjs.com, open each package's Settings → Trusted publishing, choose GitHub Actions, and enter `markwylde` / `chara` / `release.yml`. From then on every release is automatic.
+
 ## Licence
 
 MIT

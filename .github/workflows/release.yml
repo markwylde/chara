@@ -30,21 +30,41 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # semantic-release needs every commit and tag
+      # Without a starting tag semantic-release would publish 1.0.0. The first version (0.1.0)
+      # is published by hand and tagged, because npm only lets you add a trusted publisher
+      # to a package that already exists; see "Releasing" in the README.
+      - name: Check for a starting tag
+        id: start
+        run: |
+          if [ -n "$(git tag --list 'v*')" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::No v* tag yet, so nothing is released. Publish 0.1.0 by hand and push the v0.1.0 tag first."
+          fi
       - uses: actions/setup-node@v4
+        if: steps.start.outputs.ready
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org
           # No dependency cache in release builds.
       - name: Check npm supports trusted publishing
+        if: steps.start.outputs.ready
         run: |
           npm --version
           node -e "const [a,b,c]=process.argv[1].split('.').map(Number); if (a<11||(a===11&&(b<5||(b===5&&c<1)))) { console.error('npm 11.5.1 or later is needed for trusted publishing'); process.exit(1) }" "$(npm --version)"
       - run: npm ci
+        if: steps.start.outputs.ready
       - run: npm run check
+        if: steps.start.outputs.ready
       - run: npm run build
+        if: steps.start.outputs.ready
       - run: npm run typecheck
+        if: steps.start.outputs.ready
       - run: npm test
+        if: steps.start.outputs.ready
       - run: npm run test:packed
+        if: steps.start.outputs.ready
       - run: npx semantic-release
+        if: steps.start.outputs.ready
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
