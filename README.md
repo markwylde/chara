@@ -61,6 +61,38 @@ To run the React tests against React 18, run `node scripts/use-react.mjs 18` and
 
 Golden snapshots of every theme live in `packages/chara/test/__golden__`. If a change alters them, it is a breaking change to the output (see Stability in the core README).
 
+### Releasing
+
+Releases are automatic. On every push to `main`, the `Release` workflow runs every check, then [semantic-release](https://semantic-release.gitbook.io/) reads the commits since the last `v*` tag. If any call for a release, it picks the version, updates `CHANGELOG.md` and both package versions, commits that back to `main` with a tag, publishes `@markwylde/chara` and then `@markwylde/chara-react` to npm, and creates a GitHub release. Configuration is in `.releaserc.json`.
+
+Commit messages decide the version, using [Conventional Commits](https://www.conventionalcommits.org/):
+
+| Commit                                                           | Release              |
+| ---------------------------------------------------------------- | -------------------- |
+| `fix: keep ids unique across variants`                           | patch, 0.1.0 → 0.1.1 |
+| `feat: add a wave animation`                                     | minor, 0.1.0 → 0.2.0 |
+| `feat!: …` or a `BREAKING CHANGE:` footer                        | major, 0.1.0 → 1.0.0 |
+| `docs:`, `chore:`, `test:`, `refactor:`, `ci:` and anything else | no release           |
+
+Anything that changes the drawings for an existing name changes the output (see Stability in the core README), so it needs a `feat:` at least, and a breaking change once the packages reach 1.0.
+
+npm authenticates with [trusted publishing](https://docs.npmjs.com/trusted-publishers), so there is no npm token. Each package on npmjs.com has a trusted publisher for the `markwylde/chara` repository and the `release.yml` workflow, and packages get provenance automatically.
+
+#### First release (once)
+
+npm only lets you add a trusted publisher to a package that already exists, so 0.1.0 is published by hand. Until a `v*` tag exists, the workflow skips the release.
+
+```sh
+git checkout main && git pull
+npm ci && npm run build
+npm login
+node scripts/publish.mjs @markwylde/chara
+node scripts/publish.mjs @markwylde/chara-react
+git tag v0.1.0 && git push origin v0.1.0
+```
+
+Then, on npmjs.com, open each package's Settings → Trusted publishing, choose GitHub Actions, and enter `markwylde` / `chara` / `release.yml`. From then on every release is automatic.
+
 ## Licence
 
 MIT
